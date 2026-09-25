@@ -1,18 +1,16 @@
 /** @format */
 
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  Import,
-  Store,
   Users,
-  BadgeDollarSign,
-  CreditCard,
-  ShoppingBag,
-  FolderTree,
+  UserCog,
+  Newspaper,
+  Tag,
+  MapPin,
+  Building2,
   Tags,
-  Mail,
-  BriefcaseBusiness,
+  ClipboardList,
 } from "lucide-react";
 
 import {
@@ -27,182 +25,122 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import "./AdminSidebar.module.scss";
-import { useState } from "react";
-import logoFull from "@/assets/logo_header.webp";
+import logoFull from "@/assets/logo.webp";
 
-const navigationItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Users", url: "/users", icon: Users },
-  { title: "Import", url: "/import", icon: Import },
-  { title: "Pricing Markup", url: "/pricing-markup", icon: BadgeDollarSign },
-  { title: "Products", url: "/products", icon: Store },
-  { title: "Variants", url: "/variants", icon: Store },
+const navigationGroups = [
   {
-    title: "Categories",
-    icon: FolderTree,
-    children: [
-      {
-        title: "Categories",
-        url: "/grand-category",
-      },
-      {
-        title: "Sub Categories",
-        url: "/parent-category",
-      },
+    label: "Overview",
+    items: [{ title: "Dashboard", url: "/dashboard", icon: LayoutDashboard }],
+  },
+  {
+    label: "Content",
+    items: [
+      { title: "Blog", url: "/blogs", icon: Newspaper },
+      { title: "Blog Categories", url: "/blog-categories", icon: Tag },
     ],
   },
-
-  {
-    title: "Industry Management",
-    icon: BriefcaseBusiness,
-    children: [
-      {
-        title: "Industries",
-        url: "/industries",
-      },
-      {
-        title: "Use Cases",
-        url: "/use-cases",
-      },
+ {
+    label: "Business Directory",
+    items: [
+      { title: "Businesses", url: "/businesses", icon: Building2 },
+      { title: "Business Categories", url: "/business-categories", icon: Tags },
+      { title: "Business Requests", url: "/business-requests", icon: ClipboardList },
     ],
   },
-
-  { title: "Brand Management", url: "/brand-management", icon: Tags },
-  { title: "Orders", url: "/orders", icon: ShoppingBag },
-  { title: "Contact Us", url: "/contact-us", icon: Mail },
-  { title: "Payments", url: "/payments", icon: CreditCard },
-  { title: "Admin", url: "/admins", icon: Users },
+  {
+    label: "Places to Visit",
+    items: [
+      { title: "Places", url: "/places", icon: MapPin },
+      { title: "Place Categories", url: "/place-categories", icon: Tags },
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      { title: "Users", url: "/users", icon: Users },
+      { title: "Admins", url: "/admins", icon: UserCog },
+    ],
+  },
 ];
 
 export function AdminSidebar() {
   const { state } = useSidebar();
-  const location = useLocation();
-  const currentPath = location.pathname;
-
-  const isActive = (path: string) => currentPath === path;
   const isCollapsed = state === "collapsed";
-  const [openMenus, setOpenMenus] = useState<any>({});
-
-  const toggleMenu = (title: string) => {
-    setOpenMenus((prev: any) => ({
-      ...prev,
-      [title]: !prev[title],
-    }));
-  };
 
   return (
     <div className="AdminSidebar">
-      <Sidebar className={isCollapsed ? "w-14" : "w-60"} collapsible="icon">
+      <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
         <SidebarContent>
-          <div className="p-4 flex items-center justify-center">
+          <div className="flex items-center justify-center py-6 px-4">
             {isCollapsed ? (
-              // Show just the "H" icon mark when collapsed
               <div
+                className="flex items-center justify-center flex-shrink-0"
                 style={{
-                  width: 32,
-                  height: 32,
-                  background: "#F5C518",
-                  borderRadius: 6,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 900,
-                  fontSize: 18,
-                  color: "#000",
-                  fontFamily: "serif",
-                  flexShrink: 0,
+                  width: 34,
+                  height: 34,
+                  borderRadius: "50%",
+                  background: "linear-gradient(180deg, #E4CE8F 0%, #D2B876 100%)",
                 }}
               >
-                H
+                <span
+                  className="italic"
+                  style={{ fontFamily: "'Fraunces', serif", color: "#101d30", fontSize: 17, fontWeight: 600 }}
+                >
+                  M
+                </span>
               </div>
             ) : (
-              // Show full logo when expanded
-              <img
-                src={logoFull}
-                alt="Hashtag Billionaire"
+              <div
+                className="flex items-center justify-center rounded-2xl px-4 py-2.5 w-full"
                 style={{
-                  height: 40,
-                  width: "auto",
-                  objectFit: "contain",
-                  maxWidth: "100%",
+                  background: "linear-gradient(180deg, #FAF6EC 0%, #EFE4C8 100%)",
+                  boxShadow: "0 0 0 1px rgba(228,206,143,0.35)",
                 }}
-              />
+              >
+                <img
+                  src={logoFull}
+                  alt="Marco Passport"
+                  style={{ height: 34, width: "auto", objectFit: "contain" }}
+                />
+              </div>
             )}
           </div>
 
-          <SidebarGroup>
-            <SidebarGroupLabel className={isCollapsed ? "hidden" : "block"}>
-              Admin Panel
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navigationItems.map((item: any) => {
-                  // 🔽 DROPDOWN (Quotes)
-                  if (item.children) {
-                    const isOpen = openMenus[item.title];
-
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <div
-                          onClick={() => toggleMenu(item.title)}
-                          className="flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer hover:bg-muted"
-                        >
-                          <div className="flex items-center gap-3">
-                            <item.icon className="h-4 w-4 flex-shrink-0" />
-                            {!isCollapsed && <span>{item.title}</span>}
-                          </div>
-
-                          {!isCollapsed && <span>{isOpen ? "−" : "+"}</span>}
-                        </div>
-
-                        {/* CHILDREN */}
-                        {isOpen && !isCollapsed && (
-                          <div className="ml-7 mt-1 space-y-1">
-                            {item.children.map((child: any) => (
-                              <NavLink
-                                key={child.title}
-                                to={child.url}
-                                className={({ isActive }) =>
-                                  `block px-3 py-2 rounded-md text-sm ${
-                                    isActive
-                                      ? "bg-[#F5C518] text-black font-medium"
-                                      : "text-muted-foreground hover:bg-muted"
-                                  }`
-                                }
-                              >
-                                {child.title}
-                              </NavLink>
-                            ))}
-                          </div>
-                        )}
-                      </SidebarMenuItem>
-                    );
-                  }
-
-                  // 🔹 NORMAL ITEM
-                  return (
+          {navigationGroups.map((group, i) => (
+            <SidebarGroup key={group.label} className={`px-3 ${i === 0 ? "pt-0" : "pt-3"} pb-1`}>
+              <SidebarGroupLabel
+                className={
+                  isCollapsed
+                    ? "hidden"
+                    : "px-3 text-[10px] font-semibold uppercase tracking-[0.14em]"
+                }
+                style={isCollapsed ? undefined : { color: "#5c6b81" }}
+              >
+                {group.label}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-0.5 mt-1">
+                  {group.items.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
+                      <SidebarMenuButton asChild tooltip={isCollapsed ? item.title : undefined}>
                         <NavLink
                           to={item.url}
                           className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                              isActive
-                                ? "bg-[#F5C518] text-black font-medium"
-                                : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                            `flex items-center gap-3 px-3 py-2 rounded-lg text-[13.5px] sidebar-link ${
+                              isActive ? "font-medium is-active" : "font-normal"
                             }`
                           }
                         >
-                          <item.icon className="h-4 w-4 flex-shrink-0" />
+                          <item.icon className="h-[17px] w-[17px] flex-shrink-0" />
                           {!isCollapsed && <span>{item.title}</span>}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
         </SidebarContent>
       </Sidebar>
     </div>

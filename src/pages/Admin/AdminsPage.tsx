@@ -1,287 +1,305 @@
 /** @format */
-
 import { useEffect, useState, useMemo, useCallback } from "react";
-
+import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
 import {
   Search,
-  Trash2,
   Plus,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Edit,
+  Pencil,
+  Trash2,
+  UserCog,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { GetAllAdminsAPI, DeleteAdminAPI } from "@/services/Api/AdminApi";
 
-import { useNavigate } from "react-router-dom";
+const LIMIT = 15;
 
-import {
-  GetAllAdminsAPI,
-  DeleteAdminAPI,
-} from "@/services/Api/AdminApi";
+interface Admin {
+  id: number;
+  name: string;
+  email: string;
+  created_at: string;
+  admin_role?: { name: string };
+}
 
-import "./Admins.scss";
+const inputStyle = {
+  background: "#ffffff",
+  border: "1px solid #e2e5eb",
+  color: "#101d30",
+};
 
-const ITEMS_PER_PAGE = 50;
-
-const AdminsPage = () => {
+export default function Admins() {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const [allAdmins, setAllAdmins] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
 
-  const [deleteModal, setDeleteModal] =
-    useState(false);
-
-  const [selectedAdminId, setSelectedAdminId] =
-    useState<number | null>(null);
+  const token = localStorage.getItem("token") || "";
 
   const loadAdmins = useCallback(async () => {
     try {
-      const res = await GetAllAdminsAPI({
-        page: 1,
-        limit: 10000,
+      setLoading(true);
+      const res = await GetAllAdminsAPI({ token, page: 1, limit: 10000 });
+      setAdmins(res.data?.data || []);
+    } catch (err: any) {
+      toast({
+        title: "Failed to load admins",
+        description: err.response?.data?.message || "Something went wrong.",
+        variant: "destructive",
       });
-
-      setAllAdmins(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to load admins", err);
+    } finally {
+      setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     loadAdmins();
   }, [loadAdmins]);
 
-  const filteredAdmins = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-
-    if (!q) return allAdmins;
-
-    return allAdmins.filter(
-      (a) =>
-        a.name?.toLowerCase().includes(q) ||
-        a.email?.toLowerCase().includes(q),
+    if (!q) return admins;
+    return admins.filter(
+      (a) => a.name?.toLowerCase().includes(q) || a.email?.toLowerCase().includes(q)
     );
-  }, [allAdmins, search]);
+  }, [admins, search]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredAdmins.length / ITEMS_PER_PAGE),
-  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / LIMIT));
+  const paginated = filtered.slice((page - 1) * LIMIT, page * LIMIT);
 
-  const pagedAdmins = useMemo(() => {
-    const start = (page - 1) * ITEMS_PER_PAGE;
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
-    return filteredAdmins.slice(
-      start,
-      start + ITEMS_PER_PAGE,
-    );
-  }, [filteredAdmins, page]);
-
-  const handleDelete = async () => {
-    if (!selectedAdminId) return;
-
+  const handleDelete = async (id: number) => {
     try {
-      await DeleteAdminAPI([selectedAdminId]);
-
-      setAllAdmins((prev) =>
-        prev.filter((a) => a.id !== selectedAdminId),
-      );
-
-      setDeleteModal(false);
-    } catch (err) {
-      console.error(err);
+      setDeletingId(id);
+      await DeleteAdminAPI(id, token);
+      setAdmins((prev) => prev.filter((a) => a.id !== id));
+      toast({ title: "Admin deleted" });
+    } catch (err: any) {
+      toast({
+        title: "Failed to delete",
+        description: err.response?.data?.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+      setDeleteTarget(null);
     }
   };
 
   const formatDate = (date: string) => {
     if (!date) return "—";
-
-    return new Date(date).toLocaleDateString(
-      "en-GB",
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      },
-    );
+    return new Date(date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   };
 
   return (
-    <div className="admins-page">
-      <div className="admins-header">
+    <div className="w-full px-6 py-6 md:px-8 md:py-8">
+      <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
         <div>
-          <h1>Admins</h1>
-          <p>Manage platform admins</p>
+          <h1 className="flex items-center gap-2 text-[20px] font-semibold" style={{ color: "#101d30" }}>
+            <UserCog className="h-5 w-5" style={{ color: "#c9a227" }} />
+            Admins
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
+            Manage who has access to this dashboard.
+          </p>
         </div>
 
-        <div className="header-actions">
-          <div className="search-box">
-            <Search size={18} />
+        <button
+          onClick={() => navigate("/admins/add")}
+          className="h-10 px-4 rounded-lg font-semibold text-sm tracking-wide flex items-center gap-2 flex-shrink-0"
+          style={{ background: "#E4CE8F", color: "#101d30" }}
+        >
+          <Plus className="h-4 w-4" />
+          Add admin
+        </button>
+      </div>
 
-            <input
-              type="text"
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ background: "#ffffff", border: "1px solid #e2e5eb", boxShadow: "0 1px 3px rgba(16,29,48,0.06)" }}
+      >
+        <div className="px-5 py-4" style={{ borderBottom: "1px solid #edeff3" }}>
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#9aa3b2" }} />
+            <Input
               placeholder="Search admins..."
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 rounded-lg pl-9 text-[13.5px]"
+              style={inputStyle}
             />
-
-            {search && (
-              <button
-                className="clear-btn"
-                onClick={() => setSearch("")}
-              >
-                <X size={15} />
-              </button>
-            )}
           </div>
-
-          <button
-            className="add-btn"
-            onClick={() =>
-              navigate("/admins/add")
-            }
-          >
-            <Plus size={18} />
-            Add Admin
-          </button>
         </div>
-      </div>
 
-      <div className="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Created</th>
-              <th className="actions-column">
-                Actions
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {pagedAdmins.map((a, idx) => (
-              <tr key={a.id}>
-                <td>
-                  {(page - 1) *
-                    ITEMS_PER_PAGE +
-                    idx +
-                    1}
-                </td>
-
-                <td>{a.name}</td>
-
-                <td>{a.email}</td>
-
-                <td>
-                  <span className="role-badge">
-                    {a.admin_role?.name}
-                  </span>
-                </td>
-
-                <td>
-                  {formatDate(a.created_at)}
-                </td>
-
-                <td>
-                  <div className="action-buttons">
-                    <button
-                      className="edit-btn"
-                      onClick={() =>
-                        navigate(
-                          `/admins/edit/${a.id}`,
-                        )
-                      }
-                    >
-                      <Edit size={16} />
-                    </button>
-
-                    <button
-                      className="delete-btn"
-                      onClick={() => {
-                        setSelectedAdminId(
-                          a.id,
-                        );
-
-                        setDeleteModal(true);
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ background: "#f8f9fb", borderBottom: "1px solid #edeff3" }}>
+                {["Name", "Email", "Role", "Created", ""].map((h, i) => (
+                  <th
+                    key={i}
+                    className="text-left px-5 py-3 text-[10.5px] font-semibold uppercase tracking-wider"
+                    style={{ color: "#8993a6" }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <div className="pagination">
-          <button
-            disabled={page === 1}
-            onClick={() =>
-              setPage((p) => p - 1)
-            }
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          <span>
-            {page} / {totalPages}
-          </span>
-
-          <button
-            disabled={page === totalPages}
-            onClick={() =>
-              setPage((p) => p + 1)
-            }
-          >
-            <ChevronRight size={16} />
-          </button>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-14 text-center">
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto" style={{ color: "#9aa3b2" }} />
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-14 text-center text-sm" style={{ color: "#9aa3b2" }}>
+                    No admins found.
+                  </td>
+                </tr>
+              ) : (
+                paginated.map((a, idx) => (
+                  <tr key={a.id} style={{ background: idx % 2 === 1 ? "#fafbfc" : "#ffffff" }}>
+                    <td className="px-5 py-3 font-medium" style={{ color: "#101d30" }}>
+                      {a.name}
+                    </td>
+                    <td className="px-5 py-3" style={{ color: "#6b7688" }}>
+                      {a.email}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span
+                        className="inline-block px-2.5 py-1 rounded-full text-[11px] font-medium"
+                        style={{ background: "#fbf3de", color: "#a3874f" }}
+                      >
+                        {a.admin_role?.name || "—"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3" style={{ color: "#6b7688" }}>
+                      {formatDate(a.created_at)}
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => navigate(`/admins/edit/${a.id}`)}
+                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors"
+                          style={{ color: "#8993a6" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#f2f3f6")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          title="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget({ id: a.id, name: a.name })}
+                          disabled={deletingId === a.id}
+                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors disabled:opacity-50"
+                          style={{ color: "#c25b4a" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#fbeceb")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          title="Delete"
+                        >
+                          {deletingId === a.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
+
+        {!loading && filtered.length > 0 && (
+          <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid #edeff3" }}>
+            <p className="text-xs" style={{ color: "#9aa3b2" }}>
+              Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-40"
+                style={{ color: "#6b7688", border: "1px solid #e2e5eb" }}
+              >
+                Previous
+              </button>
+              <span className="text-xs" style={{ color: "#9aa3b2" }}>
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-40"
+                style={{ color: "#6b7688", border: "1px solid #e2e5eb" }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {deleteModal && (
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
         <div
-          className="modal-overlay"
-          onClick={() =>
-            setDeleteModal(false)
-          }
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: "rgba(16,29,48,0.45)" }}
+          onClick={() => deletingId === null && setDeleteTarget(null)}
         >
           <div
-            className="modal-content"
-            onClick={(e) =>
-              e.stopPropagation()
-            }
+            className="w-full max-w-sm rounded-2xl p-6"
+            style={{ background: "#ffffff", boxShadow: "0 24px 60px -16px rgba(16,29,48,0.35)" }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <h3>Delete Admin</h3>
-
-            <p>
-              Are you sure you want to delete
-              this admin?
+            <div
+              className="h-10 w-10 rounded-full flex items-center justify-center mb-3"
+              style={{ background: "#fbeceb" }}
+            >
+              <AlertTriangle className="h-5 w-5" style={{ color: "#c25b4a" }} />
+            </div>
+            <h3 className="text-[16px] font-semibold" style={{ color: "#101d30" }}>
+              Delete admin?
+            </h3>
+            <p className="text-sm mt-1.5" style={{ color: "#6b7688" }}>
+              This will permanently remove{" "}
+              <span style={{ color: "#101d30", fontWeight: 500 }}>"{deleteTarget.name}"</span> and revoke their access.
+              This can't be undone.
             </p>
 
-            <div className="modal-actions">
+            <div className="flex items-center gap-2 mt-6">
               <button
-                className="cancel-btn"
-                onClick={() =>
-                  setDeleteModal(false)
-                }
+                onClick={() => setDeleteTarget(null)}
+                disabled={deletingId !== null}
+                className="flex-1 h-10 rounded-lg text-sm font-medium disabled:opacity-50"
+                style={{ background: "#f2f3f6", color: "#101d30" }}
               >
                 Cancel
               </button>
-
               <button
-                className="confirm-btn"
-                onClick={handleDelete}
+                onClick={() => handleDelete(deleteTarget.id)}
+                disabled={deletingId !== null}
+                className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-70"
+                style={{ background: "#c25b4a", color: "#ffffff" }}
               >
-                Delete
+                {deletingId !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {deletingId !== null ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
@@ -289,6 +307,4 @@ const AdminsPage = () => {
       )}
     </div>
   );
-};
-
-export default AdminsPage;
+}

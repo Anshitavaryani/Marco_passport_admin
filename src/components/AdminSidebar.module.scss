@@ -2,4 +2,30 @@
 }
 .transition-colors {
     color: black !important;
+}.AdminSidebar {
+  :global {
+    [data-sidebar="sidebar"] {
+      background: linear-gradient(180deg, #101d30 0%, #0e1a2b 100%);
+      border-right: 1px solid rgba(228, 206, 143, 0.12);
+    }
+
+    .sidebar-link {
+      color: #93a1b5;
+      transition: background-color 0.15s ease, color 0.15s ease;
+
+      &:hover {
+        background: #182338;
+        color: #f3eee3;
+      }
+
+      &.is-active {
+        background: #e4ce8f;
+        color: #101d30 !important;
+      }
+
+      &.is-active:hover {
+        background: #d9c07a;
+      }
+    }
+  }
 }

@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://node.hashtagbillionaire.com/api/v1/";
+  "https://api.themarcopassport.com/api/v1/";
 
 export const GetAllPaymentsAPI = async (params: {
   page?: number;

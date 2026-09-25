@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://node.hashtagbillionaire.com/api/v1/";
+  "https://api.themarcopassport.com/api/v1/";
 
 const getHeaders = () => ({
   "x-access-token": localStorage.getItem("token") || "",

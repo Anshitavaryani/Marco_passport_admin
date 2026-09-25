@@ -1,17 +1,12 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://node.hashtagbillionaire.com/api/v1/";
+  import.meta.env.VITE_API_BASE_URL || "https://api.themarcopassport.com/api/v1/";
 
 export const AdminLoginAPI = async (email: string, password: string) => {
-  const formData = new FormData();
-  formData.append("email", email);
-  formData.append("password", password);
-
-  return await axios.post(`${API_BASE_URL}admin/auth/login`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+  return await axios.post(`${API_BASE_URL}admin/auth/login`, {
+    email,
+    password,
   });
 };
 
@@ -59,7 +54,7 @@ export const ChangePasswordAPI = async (data: any) => {
 
 export const GetAdminProfileAPI = async (data: any) => {
   return axios.get(
-    `${API_BASE_URL}admin/auth/getProfile`, 
+    `${API_BASE_URL}admin/auth/profile`, 
     {
       headers: {
         "x-access-token": data.token,
@@ -67,4 +62,3 @@ export const GetAdminProfileAPI = async (data: any) => {
     }
   );
 };
-
