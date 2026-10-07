@@ -5,13 +5,36 @@ import { Editor } from "@tinymce/tinymce-react";
 import Cropper, { type Area } from "react-easy-crop";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ImagePlus, X, Loader2, Star, Calendar, Clock, Trash2, AlertTriangle, ZoomIn, Crop as CropIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  ImagePlus,
+  X,
+  Loader2,
+  Star,
+  Calendar,
+  Clock,
+  Trash2,
+  AlertTriangle,
+  ZoomIn,
+  Crop as CropIcon,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AddBlogAPI, UpdateBlogAPI, GetBlogByIdAPI, DeleteBlogAPI } from "@/services/Api/BlogApi";
+import {
+  AddBlogAPI,
+  UpdateBlogAPI,
+  GetBlogByIdAPI,
+  DeleteBlogAPI,
+} from "@/services/Api/BlogApi";
 import { GetBlogCategoriesAPI } from "@/services/Api/BlogCategoryApi";
 
-const IMAGE_BASE_URL = import.meta.env.VITE_IMAGE_BASE_URL || "https://api.themarcopassport.com";
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/webp", "image/png"];
+const IMAGE_BASE_URL =
+  import.meta.env.VITE_IMAGE_BASE_URL || "https://api.themarcopassport.com";
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/png",
+];
 
 // ↓↓↓ Only place to change the featured-image crop ratio. ↓↓↓
 const FEATURED_IMAGE_RATIO_W = 16;
@@ -35,7 +58,7 @@ const getCroppedImageFile = async (
   imageSrc: string,
   croppedAreaPixels: Area,
   fileName: string,
-  mimeType: string
+  mimeType: string,
 ): Promise<File> => {
   const image = await loadImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -53,7 +76,7 @@ const getCroppedImageFile = async (
     0,
     0,
     croppedAreaPixels.width,
-    croppedAreaPixels.height
+    croppedAreaPixels.height,
   );
 
   return new Promise((resolve, reject) => {
@@ -96,17 +119,14 @@ const splitDateTime = (d: Date) => {
   if (hour12 === 0) hour12 = 12;
   const ampm: "AM" | "PM" = d.getHours() >= 12 ? "PM" : "AM";
   // Rounds to the nearest quarter-hour — published time doesn't need
-  // minute-level precision, and a 4-option minute dropdown is a much
-  // friendlier control than a free-form 0-59 field.
+  // minute-level precision.
   const minute = (Math.round(d.getMinutes() / 15) * 15) % 60;
   return { dateStr, hour12, minute, ampm };
 };
 
-// Named styles an admin can apply from the editor's "Styles" dropdown —
-// this is the whole extensibility story: adding a new visual treatment
-// later (a "Warning Box," a "Pull Quote," etc.) is adding one more
-// entry here plus one matching CSS rule below and on the live site.
-// No backend or database change needed for any of it.
+// Named styles an admin can apply from the editor's "Styles" dropdown.
+// Adding a new visual treatment later is one more entry here plus one
+// matching CSS rule below and on the live site.
 const CUSTOM_STYLE_FORMATS = [
   {
     title: "Insider Tip",
@@ -122,22 +142,12 @@ const CUSTOM_STYLE_FORMATS = [
   },
 ];
 
-// Content images (dropped/pasted/inserted into the article body) are
-// constrained to this one aspect ratio via CSS — rendered inside a
-// fixed-ratio container with object-fit: cover, not physically cropped
-// before upload. This keeps every image visually consistent on the page
-// regardless of the raw uploaded photo's original dimensions.
+// Content images are constrained to this ratio via CSS (object-fit:
+// cover), not physically cropped before upload.
 const CONTENT_IMAGE_ASPECT_RATIO = "16 / 9";
 
-// Mirrors (approximately) how these render on the live site, so what
-// the admin sees while writing roughly matches the published article —
-// including the drop-cap on the very first paragraph and the fixed
-// image aspect ratio. Adjust to match the real site's CSS exactly if
-// either drifts. NOTE: the drop-cap and image-ratio rules here are for
-// the editor's own WYSIWYG preview only — the actual published page is
-// styled by the live frontend's own stylesheet, which should carry the
-// matching versions of these same two rules (see article-content.css,
-// shared with BlogView.tsx's preview).
+// Editor WYSIWYG preview only — keep in sync with article-content.css
+// and the live frontend's article stylesheet.
 const EDITOR_CONTENT_STYLE = `
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.6; color: #101d30; padding: 8px 12px; }
   body > p:first-of-type::first-letter { float: left; font-family: Georgia, "Times New Roman", serif; font-size: 64px; line-height: 0.85; font-weight: 600; padding: 4px 8px 0 0; color: #101d30; }
@@ -161,43 +171,41 @@ export default function BlogForm() {
   const [loading, setLoading] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
 
+  // Optional — "" means no category
   const [categoryId, setCategoryId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
-  const [writtenBy, setWrittenBy] = useState("");
-  const [readTimeMinutes, setReadTimeMinutes] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
 
-  // Custom 12-hour published-at picker state, replacing the native
-  // datetime-local input — see splitDateTime's comment for why.
+  // Custom 12-hour published-at picker state
   const initialSplit = splitDateTime(new Date());
   const [publishedDate, setPublishedDate] = useState(initialSplit.dateStr);
   const [publishedHour12, setPublishedHour12] = useState(initialSplit.hour12);
   const [publishedMinute, setPublishedMinute] = useState(initialSplit.minute);
-  const [publishedAmPm, setPublishedAmPm] = useState<"AM" | "PM">(initialSplit.ampm);
+  const [publishedAmPm, setPublishedAmPm] = useState<"AM" | "PM">(
+    initialSplit.ampm,
+  );
 
   const [featuredImage, setFeaturedImage] = useState<File | null>(null);
   const [featuredPreview, setFeaturedPreview] = useState<string | null>(null);
-  const [existingImagePath, setExistingImagePath] = useState<string | null>(null);
+  const [existingImagePath, setExistingImagePath] = useState<string | null>(
+    null,
+  );
 
-  // Crop modal — featured image only. Opens right after a file is picked,
-  // before it's ever set as the actual featuredImage. Aspect is locked at
-  // FEATURED_IMAGE_RATIO_W/H; crop and zoom only reposition/scale the
-  // photo inside that fixed frame. Images inserted into the TinyMCE
-  // editor body are NOT cropped — see handleEditorImageUpload below,
-  // which uploads directly and relies on CONTENT_IMAGE_ASPECT_RATIO's
-  // CSS constraint instead.
+  // Crop modal — featured image only.
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
-  const [rawImageMeta, setRawImageMeta] = useState<{ name: string; type: string } | null>(null);
+  const [rawImageMeta, setRawImageMeta] = useState<{
+    name: string;
+    type: string;
+  } | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [cropping, setCropping] = useState(false);
 
-  // Delete (edit mode only) — same confirm-modal pattern as Blog Categories,
-  // no window.confirm.
+  // Delete (edit mode only)
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -224,12 +232,12 @@ export default function BlogForm() {
       const res = await GetBlogByIdAPI(id as string, token);
       if (res.data?.success) {
         const b = res.data.data;
-        setCategoryId(String(b.category_id ?? b.blog_category?.id ?? ""));
+        // null category → "" so the select shows "No category"
+        const catId = b.category_id ?? b.blog_category?.id;
+        setCategoryId(catId != null ? String(catId) : "");
         setTitle(b.title || "");
         setDescription(b.description || "");
         setContent(b.content || "");
-        setWrittenBy(b.written_by || "");
-        setReadTimeMinutes(b.read_time_minutes ? String(b.read_time_minutes) : "");
         setIsFeatured(!!b.is_featured);
         if (b.published_at) {
           const split = splitDateTime(new Date(b.published_at));
@@ -255,23 +263,28 @@ export default function BlogForm() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      toast({ title: "Unsupported file type", description: "Please use JPEG, JPG, WEBP, or PNG.", variant: "destructive" });
+      toast({
+        title: "Unsupported file type",
+        description: "Please use JPEG, JPG, WEBP, or PNG.",
+        variant: "destructive",
+      });
       return;
     }
-    // Don't set it as the featured image yet — open the cropper first.
     setRawImageSrc(URL.createObjectURL(file));
     setRawImageMeta({ name: file.name, type: file.type });
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setCroppedAreaPixels(null);
     setCropModalOpen(true);
-    // allow re-selecting the same file later without the input ignoring it
     e.target.value = "";
   };
 
-  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixelsValue: Area) => {
-    setCroppedAreaPixels(croppedAreaPixelsValue);
-  }, []);
+  const onCropComplete = useCallback(
+    (_croppedArea: Area, croppedAreaPixelsValue: Area) => {
+      setCroppedAreaPixels(croppedAreaPixelsValue);
+    },
+    [],
+  );
 
   const closeCropModal = () => {
     if (rawImageSrc) URL.revokeObjectURL(rawImageSrc);
@@ -289,21 +302,23 @@ export default function BlogForm() {
         rawImageSrc,
         croppedAreaPixels,
         rawImageMeta.name,
-        rawImageMeta.type
+        rawImageMeta.type,
       );
       setFeaturedImage(croppedFile);
       setFeaturedPreview(URL.createObjectURL(croppedFile));
       setExistingImagePath(null);
       closeCropModal();
     } catch (err) {
-      toast({ title: "Failed to crop image", description: "Please try again.", variant: "destructive" });
+      toast({
+        title: "Failed to crop image",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setCropping(false);
     }
   };
 
-  // Uploads editor-inserted images directly — no crop step, just the same
-  // upload-then-return-URL flow TinyMCE expects from images_upload_handler.
   const handleEditorImageUpload = (blobInfo: any): Promise<string> =>
     new Promise((resolve, reject) => {
       const formData = new FormData();
@@ -327,8 +342,6 @@ export default function BlogForm() {
         .catch(() => reject("Image upload failed. Please try again."));
     });
 
-  // Recombines the custom 12-hour picker's pieces back into a real
-  // Date for submission.
   const getPublishedAtDate = (): Date | null => {
     if (!publishedDate) return null;
     const [y, m, d] = publishedDate.split("-").map(Number);
@@ -338,10 +351,11 @@ export default function BlogForm() {
   };
 
   const handleSubmit = async () => {
-    if (!categoryId || !title.trim() || !description.trim() || !content.trim() || !writtenBy.trim()) {
+    // Category is intentionally NOT required
+    if (!title.trim() || !description.trim() || !content.trim()) {
       toast({
         title: "Missing required fields",
-        description: "Category, title, description, content, and written by are all required.",
+        description: "Title, description, and content are required.",
         variant: "destructive",
       });
       return;
@@ -350,15 +364,24 @@ export default function BlogForm() {
     try {
       setSubmitting(true);
       const formData = new FormData();
-      formData.append("category_id", categoryId);
+
+      // Optional category:
+      //  - selected → send the id
+      //  - none on create → omit the field entirely
+      //  - cleared on edit → send "" so the backend sets category_id = NULL
+      if (categoryId) {
+        formData.append("category_id", categoryId);
+      } else if (isEdit) {
+        formData.append("category_id", "");
+      }
+
       formData.append("title", title.trim());
       formData.append("description", description.trim());
       formData.append("content", content.trim());
-      formData.append("written_by", writtenBy.trim());
-      if (readTimeMinutes) formData.append("read_time_minutes", readTimeMinutes);
       formData.append("is_featured", String(isFeatured));
       const publishedAtDate = getPublishedAtDate();
-      if (publishedAtDate) formData.append("published_at", publishedAtDate.toISOString());
+      if (publishedAtDate)
+        formData.append("published_at", publishedAtDate.toISOString());
       // field name is "images" per the multer config, even though it maps to featured_image in the DB
       if (featuredImage) formData.append("images", featuredImage);
 
@@ -405,7 +428,10 @@ export default function BlogForm() {
   if (loading) {
     return (
       <div className="w-full px-6 py-16 flex justify-center">
-        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#9aa3b2" }} />
+        <Loader2
+          className="h-5 w-5 animate-spin"
+          style={{ color: "#9aa3b2" }}
+        />
       </div>
     );
   }
@@ -423,11 +449,16 @@ export default function BlogForm() {
 
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
         <div>
-          <h1 className="text-[20px] font-semibold" style={{ color: "#101d30" }}>
+          <h1
+            className="text-[20px] font-semibold"
+            style={{ color: "#101d30" }}
+          >
             {isEdit ? "Edit blog" : "Add blog"}
           </h1>
           <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
-            {isEdit ? "Update this article." : "Write a new article for the Marco Passport."}
+            {isEdit
+              ? "Update this article."
+              : "Write a new article for the Marco Passport."}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -455,7 +486,10 @@ export default function BlogForm() {
 
       <div className="space-y-5">
         <div className="rounded-2xl p-6 md:p-8 space-y-5" style={cardStyle}>
-          <h2 className="text-[13px] font-semibold uppercase tracking-wider" style={{ color: "#8993a6" }}>
+          <h2
+            className="text-[13px] font-semibold uppercase tracking-wider"
+            style={{ color: "#8993a6" }}
+          >
             Content
           </h2>
 
@@ -490,7 +524,10 @@ export default function BlogForm() {
             <Label className={labelClass} style={labelStyle}>
               Content <span style={{ color: "#c9a227" }}>*</span>
             </Label>
-            <div className="rounded-lg overflow-hidden" style={{ border: "1px solid #e2e5eb" }}>
+            <div
+              className="rounded-lg overflow-hidden"
+              style={{ border: "1px solid #e2e5eb" }}
+            >
               <Editor
                 tinymceScriptSrc="/tinymce/tinymce.min.js"
                 licenseKey="gpl"
@@ -530,212 +567,245 @@ export default function BlogForm() {
               />
             </div>
             <p className="text-[11px]" style={{ color: "#c2c7d1" }}>
-              Drop or paste images directly into the article — they upload automatically and display at a consistent
-              16:9 ratio to match the rest of the site. Use the "Styles" dropdown for headings, Insider Tip callouts,
-              and Pull Quotes.
+              Drop or paste images directly into the article — they upload
+              automatically and display at a consistent 16:9 ratio to match the
+              rest of the site. Use the "Styles" dropdown for headings, Insider
+              Tip callouts, and Pull Quotes.
             </p>
           </div>
         </div>
 
-        <div className="rounded-2xl p-6 md:p-8 space-y-3" style={cardStyle}>
-          <h2 className="text-[13px] font-semibold uppercase tracking-wider" style={{ color: "#8993a6" }}>
-            Featured image
-          </h2>
-          {featuredPreview || existingImagePath ? (
-            <div className="relative w-full max-w-[220px] rounded-lg overflow-hidden" style={{ ...cardStyle, aspectRatio: FEATURED_IMAGE_ASPECT_CSS }}>
-              <img
-                src={featuredPreview || `${IMAGE_BASE_URL}${existingImagePath}`}
-                alt="Featured"
-                className="w-full h-full object-cover"
-              />
-              <button
-                onClick={() => {
-                  setFeaturedImage(null);
-                  setFeaturedPreview(null);
-                  setExistingImagePath(null);
-                }}
-                className="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(16,29,48,0.7)", color: "#fff" }}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ) : (
-            <label
-              className="flex flex-col items-center justify-center gap-1.5 w-full max-w-[220px] rounded-lg cursor-pointer"
-              style={{ background: "#f8f9fb", border: "1px dashed #d5d9e0", aspectRatio: FEATURED_IMAGE_ASPECT_CSS }}
+        {/* Featured image + Details side by side on large screens */}
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] items-start">
+          <div className="rounded-2xl p-6 md:p-8 space-y-3" style={cardStyle}>
+            <h2
+              className="text-[13px] font-semibold uppercase tracking-wider"
+              style={{ color: "#8993a6" }}
             >
-              <ImagePlus className="h-5 w-5" style={{ color: "#9aa3b2" }} />
-              <span className="text-xs" style={{ color: "#9aa3b2" }}>
-                Upload image
-              </span>
-              <input
-                type="file"
-                accept="image/jpeg,image/jpg,image/webp,image/png"
-                className="hidden"
-                onChange={handleFeaturedImage}
-              />
-            </label>
-          )}
-          <p className="text-[11px] flex items-center gap-1" style={{ color: "#c2c7d1" }}>
-            <CropIcon className="h-3 w-3" />
-            Cropped to a fixed {FEATURED_IMAGE_RATIO_LABEL} frame — you can reposition and zoom, not stretch it.
-          </p>
-        </div>
-
-        <div className="rounded-2xl p-6 md:p-8 space-y-5" style={cardStyle}>
-          <h2 className="text-[13px] font-semibold uppercase tracking-wider" style={{ color: "#8993a6" }}>
-            Details
-          </h2>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-1.5">
-              <Label className={labelClass} style={labelStyle}>
-                Category <span style={{ color: "#c9a227" }}>*</span>
-              </Label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full h-10 rounded-lg text-[14px] px-3 outline-none"
-                style={inputStyle}
+              Featured image
+            </h2>
+            {featuredPreview || existingImagePath ? (
+              <div
+                className="relative w-full rounded-lg overflow-hidden"
+                style={{ ...cardStyle, aspectRatio: FEATURED_IMAGE_ASPECT_CSS }}
               >
-                <option value="">Select category</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className={labelClass} style={labelStyle}>
-                Written by <span style={{ color: "#c9a227" }}>*</span>
-              </Label>
-              <Input
-                value={writtenBy}
-                onChange={(e) => setWrittenBy(e.target.value)}
-                placeholder="Author name"
-                className="h-10 rounded-lg text-[14px]"
-                style={inputStyle}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className={labelClass} style={labelStyle}>
-                Read time (minutes)
-              </Label>
-              <Input
-                value={readTimeMinutes}
-                onChange={(e) => setReadTimeMinutes(e.target.value)}
-                placeholder="e.g. 6"
-                type="number"
-                className="h-10 rounded-lg text-[14px]"
-                style={inputStyle}
-              />
-            </div>
+                <img
+                  src={featuredPreview || `${IMAGE_BASE_URL}${existingImagePath}`}
+                  alt="Featured"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={() => {
+                    setFeaturedImage(null);
+                    setFeaturedPreview(null);
+                    setExistingImagePath(null);
+                  }}
+                  className="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(16,29,48,0.7)", color: "#fff" }}
+                  title="Remove image"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <label
+                className="flex flex-col items-center justify-center gap-1.5 w-full rounded-lg cursor-pointer"
+                style={{
+                  background: "#f8f9fb",
+                  border: "1px dashed #d5d9e0",
+                  aspectRatio: FEATURED_IMAGE_ASPECT_CSS,
+                }}
+              >
+                <ImagePlus className="h-5 w-5" style={{ color: "#9aa3b2" }} />
+                <span className="text-xs" style={{ color: "#9aa3b2" }}>
+                  Upload image
+                </span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/webp,image/png"
+                  className="hidden"
+                  onChange={handleFeaturedImage}
+                />
+              </label>
+            )}
+            <p
+              className="text-[11px] flex items-start gap-1"
+              style={{ color: "#c2c7d1" }}
+            >
+              <CropIcon className="h-3 w-3 mt-0.5 flex-shrink-0" />
+              Cropped to a fixed {FEATURED_IMAGE_RATIO_LABEL} frame — you can
+              reposition and zoom, not stretch it.
+            </p>
           </div>
 
-          {/* Custom 12-hour published-at picker — date input (native,
-              format is unambiguous regardless of locale) + hour/minute
-              dropdowns + a segmented AM/PM toggle, all fully styled
-              rather than relying on the native datetime-local widget,
-              which can render in 24-hour format depending on
-              browser/OS locale with no way to override it via CSS. */}
-          <div className="space-y-1.5">
-            <Label className={labelClass} style={labelStyle}>
-              Published at
-            </Label>
-            <div
-              className="flex flex-wrap items-center gap-2.5 rounded-lg px-3.5 h-12"
-              style={inputStyle}
+          <div className="rounded-2xl p-6 md:p-8 space-y-5" style={cardStyle}>
+            <h2
+              className="text-[13px] font-semibold uppercase tracking-wider"
+              style={{ color: "#8993a6" }}
             >
-              <Calendar className="h-4 w-4 flex-shrink-0" style={{ color: "#9aa3b2" }} />
-              <input
-                type="date"
-                value={publishedDate}
-                onChange={(e) => setPublishedDate(e.target.value)}
-                className="bg-transparent text-[14px] outline-none"
-                style={{ color: "#101d30" }}
-              />
+              Details
+            </h2>
 
-              <span className="h-5 w-px flex-shrink-0" style={{ background: "#e2e5eb" }} />
-
-              <Clock className="h-4 w-4 flex-shrink-0" style={{ color: "#9aa3b2" }} />
-              <select
-                value={publishedHour12}
-                onChange={(e) => setPublishedHour12(Number(e.target.value))}
-                className="bg-transparent text-[14px] outline-none cursor-pointer"
-                style={{ color: "#101d30" }}
-              >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                  <option key={h} value={h}>
-                    {pad2(h)}
-                  </option>
-                ))}
-              </select>
-              <span style={{ color: "#9aa3b2" }}>:</span>
-              <select
-                value={publishedMinute}
-                onChange={(e) => setPublishedMinute(Number(e.target.value))}
-                className="bg-transparent text-[14px] outline-none cursor-pointer"
-                style={{ color: "#101d30" }}
-              >
-                {[0, 15, 30, 45].map((m) => (
-                  <option key={m} value={m}>
-                    {pad2(m)}
-                  </option>
-                ))}
-              </select>
-
-              <div
-                className="flex rounded-md overflow-hidden ml-1 flex-shrink-0"
-                style={{ border: "1px solid #e2e5eb" }}
-              >
-                {(["AM", "PM"] as const).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPublishedAmPm(p)}
-                    className="px-2.5 py-1 text-[12px] font-semibold transition-colors"
-                    style={
-                      publishedAmPm === p
-                        ? { background: "#E4CE8F", color: "#101d30" }
-                        : { background: "#ffffff", color: "#9aa3b2" }
-                    }
+            <div className="grid gap-4 xl:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className={labelClass} style={labelStyle}>
+                  Category{" "}
+                  <span
+                    className="normal-case tracking-normal text-[11px]"
+                    style={{ color: "#b4bac6" }}
                   >
-                    {p}
-                  </button>
-                ))}
+                    (optional)
+                  </span>
+                </Label>
+                <div className="relative">
+                  <select
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className="w-full h-12 rounded-lg text-[14px] px-3.5 pr-9 outline-none cursor-pointer"
+                    style={{
+                      ...inputStyle,
+                      color: categoryId ? "#101d30" : "#9aa3b2",
+                    }}
+                  >
+                    <option value="">No category</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id} style={{ color: "#101d30" }}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  {categoryId && (
+                    <button
+                      type="button"
+                      onClick={() => setCategoryId("")}
+                      className="absolute right-8 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full flex items-center justify-center hover:opacity-70"
+                      style={{ background: "#f2f3f6", color: "#8993a6" }}
+                      title="Clear category"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Custom 12-hour published-at picker — avoids the native
+                  datetime-local widget, which can render in 24-hour
+                  format depending on browser/OS locale. */}
+              <div className="space-y-1.5">
+                <Label className={labelClass} style={labelStyle}>
+                  Published at
+                </Label>
+                <div
+                  className="flex flex-wrap items-center gap-2.5 rounded-lg px-3.5 py-2 min-h-12"
+                  style={inputStyle}
+                >
+                  <Calendar
+                    className="h-4 w-4 flex-shrink-0"
+                    style={{ color: "#9aa3b2" }}
+                  />
+                  <input
+                    type="date"
+                    value={publishedDate}
+                    onChange={(e) => setPublishedDate(e.target.value)}
+                    className="bg-transparent text-[14px] outline-none"
+                    style={{ color: "#101d30" }}
+                  />
+
+                  <span
+                    className="h-5 w-px flex-shrink-0"
+                    style={{ background: "#e2e5eb" }}
+                  />
+
+                  <Clock
+                    className="h-4 w-4 flex-shrink-0"
+                    style={{ color: "#9aa3b2" }}
+                  />
+                  <select
+                    value={publishedHour12}
+                    onChange={(e) => setPublishedHour12(Number(e.target.value))}
+                    className="bg-transparent text-[14px] outline-none cursor-pointer"
+                    style={{ color: "#101d30" }}
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                      <option key={h} value={h}>
+                        {pad2(h)}
+                      </option>
+                    ))}
+                  </select>
+                  <span style={{ color: "#9aa3b2" }}>:</span>
+                  <select
+                    value={publishedMinute}
+                    onChange={(e) => setPublishedMinute(Number(e.target.value))}
+                    className="bg-transparent text-[14px] outline-none cursor-pointer"
+                    style={{ color: "#101d30" }}
+                  >
+                    {[0, 15, 30, 45].map((m) => (
+                      <option key={m} value={m}>
+                        {pad2(m)}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div
+                    className="flex rounded-md overflow-hidden ml-auto flex-shrink-0"
+                    style={{ border: "1px solid #e2e5eb" }}
+                  >
+                    {(["AM", "PM"] as const).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPublishedAmPm(p)}
+                        className="px-2.5 py-1 text-[12px] font-semibold transition-colors"
+                        style={
+                          publishedAmPm === p
+                            ? { background: "#E4CE8F", color: "#101d30" }
+                            : { background: "#ffffff", color: "#9aa3b2" }
+                        }
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <button
-            type="button"
-            onClick={() => setIsFeatured(!isFeatured)}
-            className="w-full flex items-center justify-between max-w-xs pt-1"
-          >
-            <span className="flex items-center gap-2 text-sm" style={{ color: "#101d30" }}>
-              <Star className="h-3.5 w-3.5" style={{ color: "#8993a6" }} />
-              Featured
-            </span>
-            <span
-              className="h-5 w-9 rounded-full relative transition-colors flex-shrink-0"
-              style={{ background: isFeatured ? "#E4CE8F" : "#e2e5eb" }}
+            {/* Featured toggle — separated as its own row */}
+            <div
+              className="flex items-center justify-between gap-4 pt-4"
+              style={{ borderTop: "1px solid #edeff3" }}
             >
-              <span
-                className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
-                style={{ left: isFeatured ? 18 : 2 }}
-              />
-            </span>
-          </button>
+              <div>
+                <p
+                  className="flex items-center gap-2 text-sm font-medium"
+                  style={{ color: "#101d30" }}
+                >
+                  <Star className="h-3.5 w-3.5" style={{ color: "#c9a227" }} />
+                  Featured article
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "#9aa3b2" }}>
+                  Highlight this article on the blog page.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isFeatured}
+                onClick={() => setIsFeatured(!isFeatured)}
+                className="h-5 w-9 rounded-full relative transition-colors flex-shrink-0"
+                style={{ background: isFeatured ? "#E4CE8F" : "#e2e5eb" }}
+              >
+                <span
+                  className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+                  style={{ left: isFeatured ? 18 : 2 }}
+                />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Crop modal — featured image only, fixed ratio, drag to
-          reposition, slider to zoom. The frame itself never resizes;
-          only what's inside it moves. */}
+      {/* Crop modal — featured image only, fixed ratio */}
       {cropModalOpen && rawImageSrc && (
         <div
           className="fixed inset-0 flex items-center justify-center px-4"
@@ -743,19 +813,29 @@ export default function BlogForm() {
         >
           <div
             className="w-full max-w-md rounded-2xl overflow-hidden"
-            style={{ background: "#ffffff", boxShadow: "0 24px 60px -16px rgba(16,29,48,0.4)" }}
+            style={{
+              background: "#ffffff",
+              boxShadow: "0 24px 60px -16px rgba(16,29,48,0.4)",
+            }}
           >
             <div className="px-6 pt-6 pb-4">
-              <h3 className="text-[16px] font-semibold flex items-center gap-2" style={{ color: "#101d30" }}>
+              <h3
+                className="text-[16px] font-semibold flex items-center gap-2"
+                style={{ color: "#101d30" }}
+              >
                 <CropIcon className="h-4 w-4" style={{ color: "#c9a227" }} />
                 Crop featured image
               </h3>
               <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
-                Drag to reposition, use the slider to zoom. The frame is locked at {FEATURED_IMAGE_RATIO_LABEL}.
+                Drag to reposition, use the slider to zoom. The frame is locked
+                at {FEATURED_IMAGE_RATIO_LABEL}.
               </p>
             </div>
 
-            <div className="relative w-full" style={{ height: 380, background: "#101d30" }}>
+            <div
+              className="relative w-full"
+              style={{ height: 380, background: "#101d30" }}
+            >
               <Cropper
                 image={rawImageSrc}
                 crop={crop}
@@ -771,7 +851,10 @@ export default function BlogForm() {
             </div>
 
             <div className="px-6 py-4 flex items-center gap-3">
-              <ZoomIn className="h-4 w-4 flex-shrink-0" style={{ color: "#9aa3b2" }} />
+              <ZoomIn
+                className="h-4 w-4 flex-shrink-0"
+                style={{ color: "#9aa3b2" }}
+              />
               <input
                 type="range"
                 min={1}
@@ -815,7 +898,10 @@ export default function BlogForm() {
         >
           <div
             className="w-full max-w-sm rounded-2xl p-6"
-            style={{ background: "#ffffff", boxShadow: "0 24px 60px -16px rgba(16,29,48,0.35)" }}
+            style={{
+              background: "#ffffff",
+              boxShadow: "0 24px 60px -16px rgba(16,29,48,0.35)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
@@ -824,13 +910,18 @@ export default function BlogForm() {
             >
               <AlertTriangle className="h-5 w-5" style={{ color: "#c25b4a" }} />
             </div>
-            <h3 className="text-[16px] font-semibold" style={{ color: "#101d30" }}>
+            <h3
+              className="text-[16px] font-semibold"
+              style={{ color: "#101d30" }}
+            >
               Delete blog?
             </h3>
             <p className="text-sm mt-1.5" style={{ color: "#6b7688" }}>
               This will permanently remove{" "}
-              <span style={{ color: "#101d30", fontWeight: 500 }}>"{title || "this blog"}"</span>. This can't be
-              undone.
+              <span style={{ color: "#101d30", fontWeight: 500 }}>
+                "{title || "this blog"}"
+              </span>
+              . This can't be undone.
             </p>
 
             <div className="flex items-center gap-2 mt-6">

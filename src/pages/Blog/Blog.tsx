@@ -13,10 +13,10 @@ interface Blog {
   id: number;
   title: string;
   featured_image?: string | null;
-  written_by?: string;
   published_at?: string | null;
   is_active: boolean;
-  blog_category?: { id: number; name: string };
+  // Category is optional — a blog can exist without one
+  blog_category?: { id: number; name: string } | null;
 }
 
 const inputStyle = {
@@ -24,6 +24,8 @@ const inputStyle = {
   border: "1px solid #e2e5eb",
   color: "#101d30",
 };
+
+const COLUMNS = ["", "Title", "Category", "Published", "Status", ""];
 
 export default function Blogs() {
   const navigate = useNavigate();
@@ -64,7 +66,7 @@ export default function Blogs() {
     }
   };
 
-  const handleDelete = async (id: number, title: string) => {
+  const handleDelete = async (id: number) => {
     try {
       setDeletingId(id);
       const res = await DeleteBlogAPI(id, token);
@@ -85,7 +87,7 @@ export default function Blogs() {
   };
 
   // Client-side search + pagination — swap for server-side params once/if the
-  // blog endpoint supports them (see note above GetBlogsAPI usage)
+  // blog endpoint supports them
   const filtered = useMemo(
     () => blogs.filter((b) => b.title.toLowerCase().includes(search.toLowerCase())),
     [blogs, search]
@@ -141,10 +143,12 @@ export default function Blogs() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: "#f8f9fb", borderBottom: "1px solid #edeff3" }}>
-                {["", "Title", "Category", "Written by", "Published", "Status", ""].map((h, i) => (
+                {COLUMNS.map((h, i) => (
                   <th
                     key={i}
-                    className="text-left px-5 py-3 text-[10.5px] font-semibold uppercase tracking-wider"
+                    className={`text-left px-5 py-3 text-[10.5px] font-semibold uppercase tracking-wider ${
+                      i === 0 ? "w-[76px]" : ""
+                    }`}
                     style={{ color: "#8993a6" }}
                   >
                     {h}
@@ -155,13 +159,13 @@ export default function Blogs() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-14 text-center">
+                  <td colSpan={COLUMNS.length} className="px-5 py-14 text-center">
                     <Loader2 className="h-5 w-5 animate-spin mx-auto" style={{ color: "#9aa3b2" }} />
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-14 text-center text-sm" style={{ color: "#9aa3b2" }}>
+                  <td colSpan={COLUMNS.length} className="px-5 py-14 text-center text-sm" style={{ color: "#9aa3b2" }}>
                     No blogs found.
                   </td>
                 </tr>
@@ -169,8 +173,9 @@ export default function Blogs() {
                 paginated.map((blog, idx) => (
                   <tr key={blog.id} style={{ background: idx % 2 === 1 ? "#fafbfc" : "#ffffff" }}>
                     <td className="px-5 py-3">
+                      {/* 16:9 thumb to match the featured-image crop ratio */}
                       <div
-                        className="h-9 w-9 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0"
+                        className="h-9 w-16 rounded-md overflow-hidden flex items-center justify-center flex-shrink-0"
                         style={{ background: "#f2f3f6", border: "1px solid #e8eaef" }}
                       >
                         {blog.featured_image ? (
@@ -184,16 +189,24 @@ export default function Blogs() {
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3 font-medium max-w-[260px] truncate" style={{ color: "#101d30" }}>
+                    <td className="px-5 py-3 font-medium max-w-[380px] truncate" style={{ color: "#101d30" }}>
                       {blog.title}
                     </td>
-                    <td className="px-5 py-3" style={{ color: "#6b7688" }}>
-                      {blog.blog_category?.name || "—"}
+                    <td className="px-5 py-3">
+                      {blog.blog_category?.name ? (
+                        <span
+                          className="inline-block px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap"
+                          style={{ background: "#f2f3f6", color: "#101d30" }}
+                        >
+                          {blog.blog_category.name}
+                        </span>
+                      ) : (
+                        <span className="text-[13px]" style={{ color: "#b4bac6" }}>
+                          Uncategorized
+                        </span>
+                      )}
                     </td>
-                    <td className="px-5 py-3" style={{ color: "#6b7688" }}>
-                      {blog.written_by || "—"}
-                    </td>
-                    <td className="px-5 py-3" style={{ color: "#6b7688" }}>
+                    <td className="px-5 py-3 whitespace-nowrap" style={{ color: "#6b7688" }}>
                       {blog.published_at ? new Date(blog.published_at).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-5 py-3">
@@ -320,7 +333,7 @@ export default function Blogs() {
                 Cancel
               </button>
               <button
-                onClick={() => handleDelete(deleteTarget.id, deleteTarget.title)}
+                onClick={() => handleDelete(deleteTarget.id)}
                 disabled={deletingId !== null}
                 className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-70"
                 style={{ background: "#c25b4a", color: "#ffffff" }}

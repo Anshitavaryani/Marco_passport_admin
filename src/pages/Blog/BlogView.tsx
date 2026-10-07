@@ -1,12 +1,18 @@
 /** @format */
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Star, Clock, User, Loader2, Newspaper } from "lucide-react";
+import { ArrowLeft, Pencil, Star, Loader2, Newspaper, Tag, Calendar, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { GetBlogByIdAPI } from "@/services/Api/BlogApi";
 import "./article-content.css";
 
 const IMAGE_BASE_URL = import.meta.env.VITE_IMAGE_BASE_URL || "https://api.themarcopassport.com";
+
+// Same ratio the featured image is cropped to in BlogForm — keeps the
+// preview from cropping the image a second time.
+const FEATURED_IMAGE_RATIO_W = 16;
+const FEATURED_IMAGE_RATIO_H = 9;
+const FEATURED_IMAGE_ASPECT_CSS = `${FEATURED_IMAGE_RATIO_W}/${FEATURED_IMAGE_RATIO_H}`;
 
 const cardStyle = {
   background: "#ffffff",
@@ -20,14 +26,47 @@ interface BlogDetail {
   description: string;
   content: string;
   featured_image: string | null;
-  written_by: string;
-  read_time_minutes: number | null;
   is_featured: boolean;
   is_active: boolean;
-  published_at: string;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
-  blog_category?: { id: number; name: string };
+  // Category is optional — a blog can exist without one
+  blog_category?: { id: number; name: string } | null;
+}
+
+const formatDate = (value?: string | null) =>
+  value
+    ? new Date(value).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+    : "—";
+
+function DetailRow({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: React.ElementType;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ background: "#f2f3f6" }}
+      >
+        <Icon className="h-4 w-4" style={{ color: "#8993a6" }} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10.5px] tracking-wider uppercase" style={{ color: "#9aa3b2" }}>
+          {label}
+        </p>
+        <div className="text-sm mt-0.5" style={{ color: "#101d30" }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function BlogView() {
@@ -79,7 +118,7 @@ export default function BlogView() {
   return (
     <div className="w-full px-6 py-6 md:px-8 md:py-8">
       <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
-        <div>
+        <div className="min-w-0">
           <button
             onClick={() => navigate("/blogs")}
             className="flex items-center gap-1.5 text-sm mb-3 hover:opacity-70 transition-opacity"
@@ -112,7 +151,7 @@ export default function BlogView() {
               </span>
             )}
           </div>
-          <p className="text-sm mt-1.5" style={{ color: "#6b7688" }}>
+          <p className="text-sm mt-1.5 max-w-2xl" style={{ color: "#6b7688" }}>
             {blog.description}
           </p>
         </div>
@@ -127,9 +166,9 @@ export default function BlogView() {
         </button>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-5 lg:grid-cols-3 items-start">
         <div className="lg:col-span-2 space-y-5">
-          <div className="rounded-2xl overflow-hidden" style={{ ...cardStyle, aspectRatio: "16/7" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ ...cardStyle, aspectRatio: FEATURED_IMAGE_ASPECT_CSS }}>
             {blog.featured_image ? (
               <img
                 src={`${IMAGE_BASE_URL}${blog.featured_image}`}
@@ -147,69 +186,37 @@ export default function BlogView() {
             <h2 className="text-[13px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#8993a6" }}>
               Article
             </h2>
-            {/* article-body, not Tailwind's prose classes — see
-                article-content.css for why: prose's built-in
-                heading/blockquote/image rules would otherwise conflict
-                with the custom .insider-tip/.pull-quote/image-ratio
-                rules that need to match the live site exactly. */}
-            <div
-              className="article-body"
-              dangerouslySetInnerHTML={{ __html: blog.content }}
-            />
+            {/* article-body, not Tailwind's prose classes — see article-content.css */}
+            <div className="article-body" dangerouslySetInnerHTML={{ __html: blog.content }} />
           </div>
         </div>
 
-        <div className="space-y-5">
-          <div className="rounded-2xl p-5 space-y-3" style={cardStyle}>
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#f2f3f6" }}>
-                <User className="h-4 w-4" style={{ color: "#8993a6" }} />
-              </div>
-              <div>
-                <p className="text-[10.5px] tracking-wider uppercase" style={{ color: "#9aa3b2" }}>
-                  Written by
-                </p>
-                <p className="text-sm mt-0.5" style={{ color: "#101d30" }}>
-                  {blog.written_by}
-                </p>
-              </div>
-            </div>
+        {/* Single details card — sticks alongside the article on large screens */}
+        <div className="rounded-2xl p-5 space-y-4 lg:sticky lg:top-6" style={cardStyle}>
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider" style={{ color: "#8993a6" }}>
+            Details
+          </h2>
 
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#f2f3f6" }}>
-                <Clock className="h-4 w-4" style={{ color: "#8993a6" }} />
-              </div>
-              <div>
-                <p className="text-[10.5px] tracking-wider uppercase" style={{ color: "#9aa3b2" }}>
-                  Read time
-                </p>
-                <p className="text-sm mt-0.5" style={{ color: "#101d30" }}>
-                  {blog.read_time_minutes ? `${blog.read_time_minutes} min` : "Not set"}
-                </p>
-              </div>
-            </div>
-          </div>
+          <DetailRow icon={Tag} label="Category">
+            {blog.blog_category?.name ? (
+              <span
+                className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
+                style={{ background: "#f2f3f6", color: "#101d30" }}
+              >
+                {blog.blog_category.name}
+              </span>
+            ) : (
+              <span style={{ color: "#b4bac6" }}>Uncategorized</span>
+            )}
+          </DetailRow>
 
-          <div className="rounded-2xl p-5" style={cardStyle}>
-            <p className="text-[11px] tracking-wider uppercase mb-2.5" style={{ color: "#9aa3b2" }}>
-              Category
-            </p>
-            <span
-              className="inline-block px-2.5 py-1 rounded-full text-xs font-medium"
-              style={{ background: "#f2f3f6", color: "#101d30" }}
-            >
-              {blog.blog_category?.name || "—"}
-            </span>
-          </div>
+          <DetailRow icon={Calendar} label="Published">
+            {formatDate(blog.published_at)}
+          </DetailRow>
 
-          <div className="rounded-2xl p-5 text-xs space-y-1.5" style={cardStyle}>
-            <p style={{ color: "#9aa3b2" }}>
-              Published {new Date(blog.published_at).toLocaleDateString()}
-            </p>
-            <p style={{ color: "#9aa3b2" }}>
-              Updated {new Date(blog.updated_at).toLocaleDateString()}
-            </p>
-          </div>
+          <DetailRow icon={RefreshCw} label="Last updated">
+            {formatDate(blog.updated_at)}
+          </DetailRow>
         </div>
       </div>
     </div>
