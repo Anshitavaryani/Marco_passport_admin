@@ -26,7 +26,7 @@ import Blogs from "./pages/Blog/Blog";
 import BlogCategories from "./pages/BlogCategory/BlogCategory";
 import BlogForm from "./pages/Blog/Blogform";
 import BlogView from "./pages/Blog/BlogView";
-import BusinessRequests from "./pages/Businessrequests /Businessrequests";
+import BusinessRequests from "./pages/Businessrequests/Businessrequests";
 import Admins from "./pages/Admin/AdminsPage";
 import AdminForm from "./pages/Admin/Adminform";
 import PlaceCategories from "./pages/PlaceCategory/PlaceCategories";
