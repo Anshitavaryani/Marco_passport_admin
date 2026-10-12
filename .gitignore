@@ -1,7 +1,9 @@
 # Node modules
 node_modules/
 
+# Build output
 dist/
+
 
 
 # Environment variables
