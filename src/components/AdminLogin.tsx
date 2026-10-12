@@ -22,13 +22,9 @@ const AdminLogin = () => {
 		try {
 			const res = await AdminLoginAPI(email, password);
 			if (res.data?.success) {
-				const token = res.data?.data?.token || "";
-				const roleId = res.data?.data?.role_id || null;
-				const adminId = res.data?.data?.id || null;
-				localStorage.setItem("token", token);
-				localStorage.setItem("role_id", roleId);
-				localStorage.setItem("admin_id", adminId);
-				localStorage.setItem("isAdmin", roleId === 1 ? "true" : "false");
+				// Login returns only { name, email, token }; the role comes from
+				// /admin/auth/profile (see useAdminProfile).
+				localStorage.setItem("token", res.data?.data?.token || "");
 				toast({ title: "Welcome back!", description: "You've successfully logged in." });
 				setTimeout(() => {
 					window.location.href = "/dashboard";

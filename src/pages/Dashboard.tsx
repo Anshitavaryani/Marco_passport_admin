@@ -8,6 +8,8 @@ import {
   ArrowUpRight,
   Sparkles,
 } from "lucide-react";
+import { useAdminProfile } from "@/hooks/use-admin-profile";
+import { canAccess } from "@/lib/adminRoles";
 
 const cardStyle = {
   background: "#ffffff",
@@ -44,7 +46,10 @@ const quickLinks = [
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const adminName = localStorage.getItem("admin_name");
+  const { profile, abbreviation } = useAdminProfile();
+  const adminName = profile?.name;
+  // Every quick link is an admin-tier screen.
+  const showQuickLinks = canAccess(abbreviation, "admin");
 
   return (
     <div className="w-full px-6 py-6 md:px-8 md:py-8">
@@ -69,6 +74,7 @@ const Dashboard = () => {
       </div>
 
       {/* Quick access grid */}
+      {showQuickLinks && (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {quickLinks.map((link) => (
           <button
@@ -95,6 +101,7 @@ const Dashboard = () => {
           </button>
         ))}
       </div>
+      )}
 
       {/* Insights placeholder */}
       <div

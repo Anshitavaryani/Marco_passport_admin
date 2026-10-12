@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Star, BookmarkCheck, Mail, Phone, Calendar } from "lucide-react";
+import { ArrowLeft, Loader2, Star, Route, Mail, Phone, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { GetUserDetailsAPI } from "@/services/Api/UserApi";
 
@@ -25,11 +25,18 @@ interface UserDetail {
     created_at?: string;
     review_place?: { id: number; name: string } | null;
   }>;
-  user_passports?: Array<{
+  itineraries?: Array<{
     id: number;
-    place_id: number;
+    name: string;
+    start_date?: string | null;
+    end_date?: string | null;
     created_at?: string;
-    passport_place?: { id: number; name: string } | null;
+    items?: Array<{
+      id: number;
+      position: number;
+      visit_date?: string | null;
+      place?: { id: number; name: string; type?: string } | null;
+    }>;
   }>;
 }
 
@@ -87,7 +94,7 @@ export default function UserDetails() {
   }
 
   const reviews = user.user_reviews ?? [];
-  const passports = user.user_passports ?? [];
+  const itineraries = user.itineraries ?? [];
 
   return (
     <div className="w-full px-6 py-6 md:px-8 md:py-8">
@@ -185,30 +192,66 @@ export default function UserDetails() {
           </div>
         </div>
 
-        {/* Passport additions */}
+        {/* Itineraries */}
         <div className="rounded-2xl overflow-hidden" style={cardStyle}>
           <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: "1px solid #edeff3" }}>
-            <BookmarkCheck className="h-4 w-4" style={{ color: "#c9a227" }} />
+            <Route className="h-4 w-4" style={{ color: "#c9a227" }} />
             <h2 className="text-[14px] font-semibold" style={{ color: "#101d30" }}>
-              Passport additions ({passports.length})
+              Itineraries ({itineraries.length})
             </h2>
           </div>
           <div className="divide-y" style={{ borderColor: "#edeff3" }}>
-            {passports.length === 0 ? (
+            {itineraries.length === 0 ? (
               <p className="px-5 py-8 text-center text-sm" style={{ color: "#9aa3b2" }}>
-                Nothing saved yet.
+                No itineraries yet.
               </p>
             ) : (
-              passports.map((p) => (
-                <div key={p.id} className="px-5 py-3.5 flex items-center justify-between">
-                  <span className="text-[13.5px] font-medium" style={{ color: "#101d30" }}>
-                    {p.passport_place?.name || "Place unavailable"}
-                  </span>
-                  <span className="text-[11.5px]" style={{ color: "#9aa3b2" }}>
-                    {formatDate(p.created_at)}
-                  </span>
-                </div>
-              ))
+              itineraries.map((it) => {
+                const items = [...(it.items ?? [])].sort((a, b) => a.position - b.position);
+                const dates =
+                  it.start_date || it.end_date
+                    ? `${formatDate(it.start_date ?? undefined)} – ${formatDate(it.end_date ?? undefined)}`
+                    : "No dates";
+                return (
+                  <div key={it.id} className="px-5 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[13.5px] font-medium" style={{ color: "#101d30" }}>
+                        {it.name}
+                      </span>
+                      <span className="text-[11.5px] shrink-0" style={{ color: "#9aa3b2" }}>
+                        {dates}
+                      </span>
+                    </div>
+                    {items.length === 0 ? (
+                      <p className="text-[12.5px] mt-1" style={{ color: "#9aa3b2" }}>
+                        No places yet.
+                      </p>
+                    ) : (
+                      <ol className="mt-2 space-y-1">
+                        {items.map((item, index) => (
+                          <li
+                            key={item.id}
+                            className="flex items-center justify-between gap-3 text-[12.5px]"
+                            style={{ color: "#6b7688" }}
+                          >
+                            <span className="truncate">
+                              {index + 1}. {item.place?.name || "Place unavailable"}
+                              {item.place?.type === "business" && (
+                                <span style={{ color: "#a3874f" }}> · Business</span>
+                              )}
+                            </span>
+                            {item.visit_date && (
+                              <span className="shrink-0" style={{ color: "#9aa3b2" }}>
+                                {formatDate(item.visit_date)}
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

@@ -13,7 +13,7 @@ import {
   AlertTriangle,
   Users as UsersIcon,
   Star,
-  BookmarkCheck,
+  Route,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,7 @@ interface UserRow {
     created_at?: string;
   };
   reviews_count?: number;
-  passports_count?: number;
+  itineraries_count?: number;
 }
 
 export default function UsersPage() {
@@ -165,7 +165,7 @@ export default function UsersPage() {
             Users
           </h1>
           <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
-            Users who left a review or added a place to their passport.
+            Users who left a review or created an itinerary.
           </p>
         </div>
 
@@ -278,9 +278,9 @@ export default function UsersPage() {
                           <Star className="h-3.5 w-3.5" style={{ color: "#c9a227" }} />
                           {u.reviews_count ?? 0}
                         </span>
-                        <span className="flex items-center gap-1" title="Passport additions">
-                          <BookmarkCheck className="h-3.5 w-3.5" style={{ color: "#c9a227" }} />
-                          {u.passports_count ?? 0}
+                        <span className="flex items-center gap-1" title="Itineraries">
+                          <Route className="h-3.5 w-3.5" style={{ color: "#c9a227" }} />
+                          {u.itineraries_count ?? 0}
                         </span>
                       </div>
                     </td>

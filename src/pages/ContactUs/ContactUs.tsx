@@ -14,13 +14,11 @@ import {
   Calendar,
   Inbox,
 } from "lucide-react";
-import { ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import {
   GetAllContactUsAPI,
   DeleteContactUsAPI,
-  UpdateContactUsStatusAPI,
 } from "@/services/Api/ContactUsApi";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -28,12 +26,6 @@ import { Separator } from "@/components/ui/separator";
 import "./ContactUs.scss";
 
 const ITEMS_PER_PAGE = 100;
-
-const STATUS_OPTIONS = [
-  { value: "NEW", label: "New" },
-  { value: "IN_PROGRESS", label: "In Progress" },
-  { value: "CLOSED", label: "Closed" },
-];
 
 const getInitials = (name?: string) => {
   if (!name) return "?";
@@ -102,30 +94,6 @@ const ContactUsPage = () => {
       month: "short",
       year: "numeric",
     });
-  };
-
-  const updateStatus = async (id: number, status: string) => {
-    try {
-      await UpdateContactUsStatusAPI(id, status as any);
-
-      setAllContacts((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, status } : c)),
-      );
-
-      toast({
-        title: "Status Updated",
-        description: "Inquiry status updated successfully.",
-      });
-    } catch (err: any) {
-      console.error(err);
-
-      toast({
-        title: "Update Failed",
-        description:
-          err.response?.data?.message || "Failed to update inquiry status.",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleDelete = async () => {
@@ -199,7 +167,6 @@ const ContactUsPage = () => {
                   <th>Contact</th>
                   <th>Mobile</th>
                   <th>Reason</th>
-                  <th>Status</th>
                   <th>Date</th>
                   <th className="actions-column">Actions</th>
                 </tr>
@@ -226,26 +193,6 @@ const ContactUsPage = () => {
 
                     <td>
                       <span className="reason-text">{c.reason}</span>
-                    </td>
-
-                    <td>
-                      <div className="status-select-wrapper">
-                        <select
-                          className={`status-select status-${c.status?.toLowerCase()}`}
-                          value={c.status}
-                          onChange={(e) => updateStatus(c.id, e.target.value)}
-                        >
-                          {STATUS_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown
-                          size={14}
-                          className="status-select-chevron"
-                        />
-                      </div>
                     </td>
 
                     <td>{formatDate(c.created_at)}</td>

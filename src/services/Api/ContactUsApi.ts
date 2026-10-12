@@ -17,21 +17,6 @@ export const GetAllContactUsAPI = async () => {
   );
 };
 
-export const UpdateContactUsStatusAPI = async (
-  id: number,
-  status: "NEW" | "IN_PROGRESS" | "CLOSED",
-) => {
-  return axios.put(
-    `${API_BASE_URL}contactUs/${id}`,
-    {
-      status,
-    },
-    {
-      headers: getHeaders(),
-    },
-  );
-};
-
 export const DeleteContactUsAPI = async (id: number) => {
   return axios.delete(
     `${API_BASE_URL}contactUs/${id}`,

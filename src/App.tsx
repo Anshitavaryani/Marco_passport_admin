@@ -16,7 +16,6 @@ import AdminForgotPassword from "./components/AdminForgotPassword";
 import AdminChangePassword from "./components/AdminChangePassword";
 import AdminProfile from "./pages/AdminProfile";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
-import PaymentsPage from "./pages/Payment/PaymentsPage";
 import AdminsPage from "./pages/Admin/AdminsPage";
 import ContactUsPage from "./pages/ContactUs/ContactUs";
 import Places from "./pages/Places/Places";
@@ -27,7 +26,6 @@ import BlogCategories from "./pages/BlogCategory/BlogCategory";
 import BlogForm from "./pages/Blog/Blogform";
 import BlogView from "./pages/Blog/BlogView";
 import BusinessRequests from "./pages/Businessrequests/Businessrequests";
-import Admins from "./pages/Admin/AdminsPage";
 import AdminForm from "./pages/Admin/Adminform";
 import PlaceCategories from "./pages/PlaceCategory/PlaceCategories";
 import BusinessCategories from "./pages/BusinessCategories/BusinessCategories";
@@ -52,7 +50,7 @@ const App = () => (
           <Route
             path="/dashboard"
             element={
-              <AdminLayout>
+              <AdminLayout access="any">
                 <Dashboard />
               </AdminLayout>
             }
@@ -60,7 +58,7 @@ const App = () => (
           <Route
             path="/change-password"
             element={
-              <AdminLayout>
+              <AdminLayout access="any">
                 <AdminChangePassword />
               </AdminLayout>
             }
@@ -69,7 +67,7 @@ const App = () => (
           <Route
             path="/admin/profile"
             element={
-              <AdminLayout>
+              <AdminLayout access="any">
                 <AdminProfile />
               </AdminLayout>
             }
@@ -94,15 +92,6 @@ const App = () => (
           />
 
           <Route
-            path="/payments"
-            element={
-              <AdminLayout>
-                <PaymentsPage />
-              </AdminLayout>
-            }
-          />
-
-          <Route
             path="/settings"
             element={
               <AdminLayout>
@@ -114,7 +103,7 @@ const App = () => (
           <Route
             path="/admins"
             element={
-              <AdminLayout>
+              <AdminLayout access="superAdmin">
                 <AdminsPage />
               </AdminLayout>
             }
@@ -228,15 +217,6 @@ const App = () => (
           />
 
           <Route
-            path="/blogs"
-            element={
-              <AdminLayout>
-                <Blogs />
-              </AdminLayout>
-            }
-          />
-
-          <Route
             path="/blogs/add"
             element={
               <AdminLayout>
@@ -280,19 +260,11 @@ const App = () => (
               </AdminLayout>
             }
           />
-          <Route
-            path="/admins"
-            element={
-              <AdminLayout>
-                <Admins />
-              </AdminLayout>
-            }
-          />
 
           <Route
             path="/admins/add"
             element={
-              <AdminLayout>
+              <AdminLayout access="superAdmin">
                 <AdminForm />
               </AdminLayout>
             }
@@ -301,7 +273,7 @@ const App = () => (
           <Route
             path="/admins/edit/:id"
             element={
-              <AdminLayout>
+              <AdminLayout access="superAdmin">
                 <AdminForm />
               </AdminLayout>
             }

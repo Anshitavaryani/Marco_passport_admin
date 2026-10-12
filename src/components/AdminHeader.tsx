@@ -1,6 +1,6 @@
 /** @format */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { User, LogOut, Key, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -10,62 +10,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { GetAdminProfileAPI } from "@/services/Api/AuthApi";
+import { useAdminProfile } from "@/hooks/use-admin-profile";
+import { clearSession } from "@/lib/session";
 
 export function AdminHeader() {
-  const [adminName, setAdminName] = useState("Admin User");
+  const { profile } = useAdminProfile();
+  const adminName = profile?.name || "Admin User";
   const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    loadAdminProfile();
-  }, []);
-
-  const loadAdminProfile = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const res = await GetAdminProfileAPI({ token });
-
-      if (res?.data?.success) {
-        setAdminName(res.data.data.name || "Admin User");
-      }
-    } catch (err: any) {
-      const status = err?.response?.status;
-      const errorMessage =
-        err?.response?.data?.message ||
-        err?.response?.data?.data?.message ||
-        "";
-
-      // Key off the status code first — any 401 here means the session is
-      // no longer valid, regardless of the exact wording the backend uses
-      // ("Invalid token.", "jwt expired", etc.). The string checks stay as
-      // a fallback in case a 401 ever comes back without the status set
-      // correctly on the error object.
-      const isAuthFailure =
-        status === 401 ||
-        errorMessage.toLowerCase().includes("jwt expired") ||
-        errorMessage.toLowerCase().includes("token expired") ||
-        errorMessage.toLowerCase().includes("invalid token");
-
-      if (isAuthFailure) {
-        // Clear session
-        localStorage.removeItem("token");
-        localStorage.removeItem("isAdmin");
-        localStorage.removeItem("role_id");
-        localStorage.removeItem("admin_id");
-
-        sessionStorage.clear();
-
-        // Redirect to login with session expired flag
-        window.location.href = "/?sessionExpired=true";
-
-        return;
-      }
-
-      console.log("Failed to load profile");
-    }
-  };
 
   const initials = adminName
     .trim()
@@ -116,10 +67,7 @@ export function AdminHeader() {
           <DropdownMenuItem
             className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
             onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("isAdmin");
-              localStorage.removeItem("role_id");
-              localStorage.removeItem("admin_id");
+              clearSession();
               window.location.href = "/";
             }}
           >

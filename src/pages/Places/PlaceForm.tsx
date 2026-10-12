@@ -544,9 +544,9 @@ export default function PlaceForm() {
   };
 
   const handleSubmit = async () => {
-    if (!name.trim() || !shortDescription.trim()) {
+    if (!name.trim() || !shortDescription.trim() || !address.trim()) {
       toast({
-        title: "Name and short description are required",
+        title: "Name, short description and address are required",
         variant: "destructive",
       });
       return;
@@ -590,7 +590,7 @@ export default function PlaceForm() {
         formData.append("insider_tips", JSON.stringify(cleanInsiderTips));
       }
 
-      if (address.trim()) formData.append("address", address.trim());
+      formData.append("address", address.trim());
       if (neighborhood.trim())
         formData.append("neighborhood", neighborhood.trim());
       if (phone.trim()) formData.append("phone", phone.trim());
@@ -1097,13 +1097,15 @@ export default function PlaceForm() {
 
           <div className="rounded-2xl p-5 space-y-3" style={cardStyle}>
             <p className={labelClass} style={labelStyle}>
-              Location
+              Location <span style={{ color: "#c9a227" }}>*</span>
             </p>
 
             <Input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Full address"
+              placeholder="Full street address (required)"
+              required
+              aria-required="true"
               className="h-9 rounded-lg text-[13.5px]"
               style={inputStyle}
             />
@@ -1151,7 +1153,8 @@ export default function PlaceForm() {
             )}
 
             <p className="text-[11px]" style={{ color: "#c2c7d1" }}>
-              Visitors can use the address to open the location in Google Maps.
+              Required. Itinerary maps pin this listing by its name and
+              address, so enter the complete street address.
             </p>
           </div>
 

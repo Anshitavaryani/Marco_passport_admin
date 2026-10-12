@@ -26,11 +26,20 @@ import {
 } from "@/components/ui/sidebar";
 import "./AdminSidebar.module.scss";
 import logoFull from "@/assets/logo.webp";
+import { useAdminProfile } from "@/hooks/use-admin-profile";
+import { AccessTier, canAccess } from "@/lib/adminRoles";
 
-const navigationGroups = [
+type NavItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  access?: AccessTier; // defaults to "admin", like AdminLayout
+};
+
+const navigationGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Overview",
-    items: [{ title: "Dashboard", url: "/dashboard", icon: LayoutDashboard }],
+    items: [{ title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, access: "any" }],
   },
   {
     label: "Content",
@@ -58,7 +67,7 @@ const navigationGroups = [
     label: "People",
     items: [
       { title: "Users", url: "/users", icon: Users },
-      { title: "Admins", url: "/admins", icon: UserCog },
+      { title: "Admins", url: "/admins", icon: UserCog, access: "superAdmin" },
     ],
   },
 ];
@@ -66,6 +75,15 @@ const navigationGroups = [
 export function AdminSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { abbreviation } = useAdminProfile();
+
+  // Hide what this admin's role can't use; the API would refuse it anyway.
+  const visibleGroups = navigationGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canAccess(abbreviation, item.access ?? "admin")),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <div className="AdminSidebar">
@@ -106,7 +124,7 @@ export function AdminSidebar() {
             )}
           </div>
 
-          {navigationGroups.map((group, i) => (
+          {visibleGroups.map((group, i) => (
             <SidebarGroup key={group.label} className={`px-3 ${i === 0 ? "pt-0" : "pt-3"} pb-1`}>
               <SidebarGroupLabel
                 className={
