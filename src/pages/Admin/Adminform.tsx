@@ -21,7 +21,7 @@ import {
   GetRolesAPI,
   UpdateAdminAPI,
 } from "@/services/Api/AdminApi";
-import { PANEL_ROLES, ROLE } from "@/lib/adminRoles";
+import { PANEL_ROLES, ROLE, ROLE_ACCESS } from "@/lib/adminRoles";
 import { cn } from "@/lib/utils";
 
 interface Role {
@@ -33,14 +33,6 @@ interface Department {
   id: number;
   name: string;
 }
-
-const ROLE_ACCESS: Record<string, string[]> = {
-  [ROLE.SUPER_ADMIN]: ["Full system access", "Admin accounts and roles"],
-  [ROLE.ADMIN]: ["Users, places and businesses", "Blogs, categories and submissions"],
-  [ROLE.SUB_ADMIN]: ["Users, places and businesses", "Blogs, categories and submissions"],
-  [ROLE.ENGINEER]: ["FAQs", "Own profile and password"],
-  [ROLE.EDITOR]: ["FAQs", "Own profile and password"],
-};
 
 const labelClass = "text-[11px] leading-6 tracking-wider uppercase text-ink-subtle";
 

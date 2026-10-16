@@ -1,6 +1,7 @@
 /** @format */
 
 import { useState } from "react";
+import { Link } from "react-router";
 import { User, LogOut, Key, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -12,19 +13,13 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAdminProfile } from "@/hooks/use-admin-profile";
 import { clearSession } from "@/lib/session";
+import { getInitials } from "@/lib/utils";
 
 export function AdminHeader() {
   const { profile } = useAdminProfile();
   const adminName = profile?.name || "Admin User";
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const initials = adminName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
+  const initials = getInitials(adminName);
 
   return (
     <header className="h-16 sticky top-0 z-10 border-b bg-background/95 backdrop-blur-sm px-6 flex items-center justify-between">
@@ -49,19 +44,19 @@ export function AdminHeader() {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52 border shadow-lg">
-          <DropdownMenuItem
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => (window.location.href = "/admin/profile")}
-          >
-            <User className="h-4 w-4" />
-            Profile
+          {/* Router links, not window.location: a full reload would rebuild
+              the layout and reset the sidebar. */}
+          <DropdownMenuItem asChild className="flex items-center gap-2 cursor-pointer">
+            <Link to="/admin/profile">
+              <User className="h-4 w-4" />
+              Profile
+            </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => (window.location.href = "/change-password")}
-          >
-            <Key className="h-4 w-4" />
-            Change Password
+          <DropdownMenuItem asChild className="flex items-center gap-2 cursor-pointer">
+            <Link to="/change-password">
+              <Key className="h-4 w-4" />
+              Change Password
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

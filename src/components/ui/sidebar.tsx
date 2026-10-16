@@ -16,6 +16,11 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
+const readSidebarCookie = () => {
+  const match = document.cookie.match(/(?:^|;\s*)sidebar:state=(true|false)/);
+  return match ? match[1] === "true" : undefined;
+};
+
 type SidebarContext = {
   state: "expanded" | "collapsed";
   open: boolean;
@@ -50,7 +55,8 @@ const SidebarProvider = React.forwardRef<
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen);
+  // It starts from the saved cookie so a reload keeps the admin's choice.
+  const [_open, _setOpen] = React.useState(() => readSidebarCookie() ?? defaultOpen);
   const open = openProp ?? _open;
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {

@@ -23,5 +23,14 @@ const TIER_ROLES: Record<Exclude<AccessTier, "any">, string[]> = {
 // used by public sign-up) must never be assigned to an admin.
 export const PANEL_ROLES: string[] = TIER_ROLES.editor;
 
-export const canAccess = (abbreviation: string | undefined, tier: AccessTier) =>
+// What each role can manage, in plain words, for the admin form and profile.
+export const ROLE_ACCESS: Record<string, string[]> = {
+  [ROLE.SUPER_ADMIN]: ["Full system access", "Admin accounts and roles"],
+  [ROLE.ADMIN]: ["Users, places and businesses", "Blogs, categories and submissions"],
+  [ROLE.SUB_ADMIN]: ["Users, places and businesses", "Blogs, categories and submissions"],
+  [ROLE.ENGINEER]: ["FAQs", "Own profile and password"],
+  [ROLE.EDITOR]: ["FAQs", "Own profile and password"],
+};
+
+export const canAccess =(abbreviation: string | undefined, tier: AccessTier) =>
   tier === "any" || (!!abbreviation && TIER_ROLES[tier].includes(abbreviation));
