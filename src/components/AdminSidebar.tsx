@@ -1,6 +1,6 @@
 /** @format */
 
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import {
   LayoutDashboard,
   Users,
@@ -24,7 +24,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import "./AdminSidebar.module.scss";
 import logoFull from "@/assets/logo.webp";
 import { useAdminProfile } from "@/hooks/use-admin-profile";
 import { AccessTier, canAccess } from "@/lib/adminRoles";
@@ -86,81 +85,49 @@ export function AdminSidebar() {
     .filter((group) => group.items.length > 0);
 
   return (
-    <div className="AdminSidebar">
-      <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
-        <SidebarContent>
-          <div className="flex items-center justify-center py-6 px-4">
-            {isCollapsed ? (
-              <div
-                className="flex items-center justify-center flex-shrink-0"
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: "50%",
-                  background: "linear-gradient(180deg, #E4CE8F 0%, #D2B876 100%)",
-                }}
-              >
-                <span
-                  className="italic"
-                  style={{ fontFamily: "'Fraunces', serif", color: "#101d30", fontSize: 17, fontWeight: 600 }}
-                >
-                  M
-                </span>
-              </div>
-            ) : (
-              <div
-                className="flex items-center justify-center rounded-2xl px-4 py-2.5 w-full"
-                style={{
-                  background: "linear-gradient(180deg, #FAF6EC 0%, #EFE4C8 100%)",
-                  boxShadow: "0 0 0 1px rgba(228,206,143,0.35)",
-                }}
-              >
-                <img
-                  src={logoFull}
-                  alt="Marco Passport"
-                  style={{ height: 34, width: "auto", objectFit: "contain" }}
-                />
-              </div>
-            )}
-          </div>
+    <Sidebar className="border-sidebar-border" collapsible="icon">
+      <SidebarContent className="bg-linear-to-b from-navy to-navy-deep">
+        <div className="flex items-center justify-center py-6 px-4">
+          {isCollapsed ? (
+            <div className="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-linear-to-b from-gold-light to-gold-muted">
+              <span className="font-display text-[17px] font-semibold italic text-navy">M</span>
+            </div>
+          ) : (
+            <div className="flex w-full items-center justify-center rounded-2xl px-4 py-2.5 bg-linear-to-b from-parchment to-parchment-deep ring-1 ring-gold-light/35">
+              <img src={logoFull} alt="Marco Passport" className="h-[34px] w-auto object-contain" />
+            </div>
+          )}
+        </div>
 
-          {visibleGroups.map((group, i) => (
-            <SidebarGroup key={group.label} className={`px-3 ${i === 0 ? "pt-0" : "pt-3"} pb-1`}>
-              <SidebarGroupLabel
-                className={
-                  isCollapsed
-                    ? "hidden"
-                    : "px-3 text-[10px] font-semibold uppercase tracking-[0.14em]"
-                }
-                style={isCollapsed ? undefined : { color: "#5c6b81" }}
-              >
-                {group.label}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="gap-0.5 mt-1">
-                  {group.items.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild tooltip={isCollapsed ? item.title : undefined}>
-                        <NavLink
-                          to={item.url}
-                          className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 rounded-lg text-[13.5px] sidebar-link ${
-                              isActive ? "font-medium is-active" : "font-normal"
-                            }`
-                          }
-                        >
-                          <item.icon className="h-[17px] w-[17px] flex-shrink-0" />
-                          {!isCollapsed && <span>{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
-        </SidebarContent>
-      </Sidebar>
-    </div>
+        {visibleGroups.map((group, i) => (
+          <SidebarGroup key={group.label} className={`px-3 ${i === 0 ? "pt-0" : "pt-3"} pb-1`}>
+            <SidebarGroupLabel
+              className={isCollapsed ? "hidden" : "px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-dusk"}
+            >
+              {group.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5 mt-1">
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    {/* NavLink marks the current page with aria-current="page" */}
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={isCollapsed ? item.title : undefined}
+                      className="h-auto gap-3 rounded-lg px-3 py-2 text-[13.5px] transition-[width,height,padding,color,background-color] aria-[current=page]:bg-gold-light aria-[current=page]:font-medium aria-[current=page]:text-navy aria-[current=page]:hover:bg-gold-muted aria-[current=page]:hover:text-navy"
+                    >
+                      <NavLink to={item.url}>
+                        <item.icon className="h-[17px] w-[17px] shrink-0" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+    </Sidebar>
   );
 }

@@ -21,7 +21,7 @@ function AccessGate({ access, children }: { access: AccessTier; children: React.
   if (loading) {
     return (
       <div className="w-full py-16 flex justify-center">
-        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#9aa3b2" }} />
+        <Loader2 className="h-5 w-5 animate-spin text-ink-faint" />
       </div>
     );
   }
@@ -33,7 +33,7 @@ export function AdminLayout({ children, access = "admin" }: AdminLayoutProps) {
   return (
     <ProtectedRoute>
       <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-admin-bg">
+        <div className="min-h-screen flex w-full bg-surface-subtle">
           <AdminSidebar />
           <div className="flex-1 flex flex-col">
             <AdminHeader />

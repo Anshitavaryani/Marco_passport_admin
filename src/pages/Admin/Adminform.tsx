@@ -1,6 +1,6 @@
 /** @format */
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -22,6 +22,7 @@ import {
   UpdateAdminAPI,
 } from "@/services/Api/AdminApi";
 import { PANEL_ROLES, ROLE } from "@/lib/adminRoles";
+import { cn } from "@/lib/utils";
 
 interface Role {
   id: number;
@@ -41,18 +42,7 @@ const ROLE_ACCESS: Record<string, string[]> = {
   [ROLE.EDITOR]: ["FAQs", "Own profile and password"],
 };
 
-const cardStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e5eb",
-  boxShadow: "0 1px 3px rgba(16,29,48,0.06)",
-};
-const inputStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e5eb",
-  color: "#101d30",
-};
-const labelClass = "text-[11px] tracking-wider uppercase";
-const labelStyle = { color: "#8993a6" };
+const labelClass = "text-[11px] leading-6 tracking-wider uppercase text-ink-subtle";
 
 export default function AdminForm() {
   const navigate = useNavigate();
@@ -168,7 +158,7 @@ export default function AdminForm() {
   if (loading) {
     return (
       <div className="w-full px-6 py-16 flex justify-center">
-        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#9aa3b2" }} />
+        <Loader2 className="h-5 w-5 animate-spin text-ink-faint" />
       </div>
     );
   }
@@ -177,54 +167,51 @@ export default function AdminForm() {
     <div className="w-full px-6 py-6 md:px-8 md:py-8">
       <button
         onClick={() => navigate("/admins")}
-        className="flex items-center gap-1.5 text-sm mb-3 hover:opacity-70 transition-opacity"
-        style={{ color: "#6b7688" }}
+        className="flex items-center gap-1.5 text-sm mb-3 hover:opacity-70 transition-opacity text-ink-muted"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to admins
       </button>
 
       <div className="mb-6">
-        <h1 className="text-[20px] font-semibold" style={{ color: "#101d30" }}>
+        <h1 className="text-[20px] font-semibold text-navy">
           {isEdit ? "Edit admin" : "Add admin"}
         </h1>
-        <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
+        <p className="text-sm mt-1 text-ink-muted">
           {isEdit ? "Update basic information for this administrator." : "Invite a new member to the management team."}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="grid gap-5 lg:grid-cols-3">
         {/* Main column */}
-        <div className="lg:col-span-2 rounded-2xl p-6 md:p-8 space-y-5" style={cardStyle}>
+        <div className="lg:col-span-2 rounded-2xl p-6 md:p-8 space-y-5 bg-white border border-line shadow-card">
           <div className="space-y-1.5">
-            <Label className={labelClass} style={labelStyle}>
-              Full name <span style={{ color: "#c9a227" }}>*</span>
+            <Label className={labelClass}>
+              Full name <span className="text-gold">*</span>
             </Label>
             <div className="relative">
               <User
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
-                style={{ color: "#9aa3b2" }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint"
               />
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g. Sarah Jenkins"
                 className="h-10 rounded-lg pl-9 text-[14px]"
-                style={inputStyle}
                 required
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label className={labelClass} style={labelStyle}>
-              Email address {isEdit && <span style={{ color: "#c2c7d1" }}>(non-editable)</span>}
+            <Label className={labelClass}>
+              Email address {isEdit && <span className="text-ink-ghost">(non-editable)</span>}
             </Label>
             <div className="relative">
               {isEdit ? (
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#9aa3b2" }} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint" />
               ) : (
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#9aa3b2" }} />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint" />
               )}
               <Input
                 type="email"
@@ -232,13 +219,12 @@ export default function AdminForm() {
                 readOnly={isEdit}
                 onChange={(e) => !isEdit && setFormData({ ...formData, email: e.target.value })}
                 placeholder="admin@themarcopassport.com"
-                className="h-10 rounded-lg pl-9 text-[14px]"
-                style={isEdit ? { ...inputStyle, background: "#f8f9fb", color: "#8993a6" } : inputStyle}
+                className={cn("h-10 rounded-lg pl-9 text-[14px]", isEdit && "bg-surface-muted text-ink-subtle")}
                 required
               />
             </div>
             {isEdit && (
-              <p className="text-[11px]" style={{ color: "#9aa3b2" }}>
+              <p className="text-[11px] text-ink-faint">
                 Email addresses are tied to the account identity and cannot be changed.
               </p>
             )}
@@ -246,27 +232,25 @@ export default function AdminForm() {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label className={labelClass} style={labelStyle}>
-                Role <span style={{ color: "#c9a227" }}>*</span>
+              <Label className={labelClass}>
+                Role <span className="text-gold">*</span>
               </Label>
               {isSuperAdminAccount ? (
                 <Input
                   value={selectedRole?.name || "Super Admin"}
                   readOnly
-                  className="h-10 rounded-lg text-[14px]"
-                  style={{ ...inputStyle, background: "#f8f9fb", color: "#8993a6" }}
+                  className="h-10 rounded-lg text-[14px] bg-surface-muted text-ink-subtle"
                 />
               ) : (
                 <select
                   value={formData.role_id}
                   onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
-                  className="w-full h-10 rounded-lg text-[14px] px-3 outline-none cursor-pointer"
-                  style={{ ...inputStyle, color: formData.role_id ? "#101d30" : "#9aa3b2" }}
+                  className={cn("w-full h-10 rounded-lg text-[14px] px-3 outline-hidden cursor-pointer bg-white border border-line", formData.role_id ? "text-navy" : "text-ink-faint")}
                   required
                 >
                   <option value="">Select a role</option>
                   {assignableRoles.map((r) => (
-                    <option key={r.id} value={r.id} style={{ color: "#101d30" }}>
+                    <option key={r.id} value={r.id} className="text-navy">
                       {r.name}
                     </option>
                   ))}
@@ -275,29 +259,27 @@ export default function AdminForm() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className={labelClass} style={labelStyle}>
+              <Label className={labelClass}>
                 Department{" "}
                 {isEdit ? (
-                  <span style={{ color: "#c2c7d1" }}>(non-editable)</span>
+                  <span className="text-ink-ghost">(non-editable)</span>
                 ) : (
-                  <span style={{ color: "#c9a227" }}>*</span>
+                  <span className="text-gold">*</span>
                 )}
               </Label>
               <select
                 value={formData.department_id}
                 onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
                 disabled={isEdit}
-                className="w-full h-10 rounded-lg text-[14px] px-3 outline-none cursor-pointer disabled:cursor-default"
-                style={
-                  isEdit
-                    ? { ...inputStyle, background: "#f8f9fb", color: "#8993a6" }
-                    : { ...inputStyle, color: formData.department_id ? "#101d30" : "#9aa3b2" }
-                }
+                className={cn(
+                  "w-full h-10 rounded-lg text-[14px] px-3 outline-hidden cursor-pointer disabled:cursor-default border border-line",
+                  isEdit ? "bg-surface-muted text-ink-subtle" : formData.department_id ? "bg-white text-navy" : "bg-white text-ink-faint",
+                )}
                 required={!isEdit}
               >
                 <option value="">{isEdit ? "—" : "Select a department"}</option>
                 {departments.map((d) => (
-                  <option key={d.id} value={d.id} style={{ color: "#101d30" }}>
+                  <option key={d.id} value={d.id} className="text-navy">
                     {d.name}
                   </option>
                 ))}
@@ -307,15 +289,14 @@ export default function AdminForm() {
 
           {!isEdit && (
             <div
-              className="flex gap-3 rounded-xl p-4"
-              style={{ background: "#fbf3de", border: "1px solid rgba(228,206,143,0.4)" }}
+              className="flex gap-3 rounded-xl p-4 bg-gold-soft border border-gold-light/40"
             >
-              <Send className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: "#a3874f" }} />
+              <Send className="h-4 w-4 shrink-0 mt-0.5 text-gold-dark" />
               <div>
-                <p className="text-[13px] font-semibold" style={{ color: "#7a6538" }}>
+                <p className="text-[13px] font-semibold text-gold-deep">
                   Invitation logic
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: "#8a7448" }}>
+                <p className="text-xs mt-0.5 text-gold-deep">
                   A temporary password will be emailed to the new admin. They can change it after signing in.
                 </p>
               </div>
@@ -325,20 +306,20 @@ export default function AdminForm() {
 
         {/* Sidebar */}
         <div className="space-y-5">
-          <div className="rounded-2xl p-5" style={{ background: "#101d30" }}>
+          <div className="rounded-2xl p-5 bg-navy">
             <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck className="h-4 w-4" style={{ color: "#E4CE8F" }} />
-              <span className="text-[10px] tracking-wider uppercase" style={{ color: "#8993a6" }}>
+              <ShieldCheck className="h-4 w-4 text-gold-light" />
+              <span className="text-[10px] tracking-wider uppercase text-ink-subtle">
                 Access level
               </span>
             </div>
-            <p className="text-[15px] font-semibold mb-3" style={{ color: "#F3EEE3" }}>
+            <p className="text-[15px] font-semibold mb-3 text-cream">
               {selectedRole?.name || "No role selected"}
             </p>
             <div className="space-y-2">
               {(ROLE_ACCESS[selectedRole?.abbreviation ?? ""] ?? []).map((line) => (
-                <div key={line} className="flex items-center gap-2 text-xs" style={{ color: "#c9d1de" }}>
-                  <CheckCircle2 className="h-3.5 w-3.5" style={{ color: "#E4CE8F" }} />
+                <div key={line} className="flex items-center gap-2 text-xs text-ink-ghost">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-gold-light" />
                   {line}
                 </div>
               ))}
@@ -349,8 +330,7 @@ export default function AdminForm() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full h-10 rounded-lg font-semibold text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-60"
-              style={{ background: "#E4CE8F", color: "#101d30" }}
+              className="w-full h-10 rounded-lg font-semibold text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-60 bg-gold-light text-navy"
             >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {submitting ? "Saving..." : isEdit ? "Update changes" : "Send invite"}
@@ -358,8 +338,7 @@ export default function AdminForm() {
             <button
               type="button"
               onClick={() => navigate("/admins")}
-              className="w-full h-10 rounded-lg font-semibold text-sm tracking-wide"
-              style={{ background: "#f2f3f6", color: "#101d30" }}
+              className="w-full h-10 rounded-lg font-semibold text-sm tracking-wide bg-fill text-navy"
             >
               Cancel
             </button>

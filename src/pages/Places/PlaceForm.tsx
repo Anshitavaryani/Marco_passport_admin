@@ -1,8 +1,6 @@
 /** @format */
 import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
-import { Editor } from "@tinymce/tinymce-react";
+import { useNavigate, useParams } from "react-router";
 import Cropper, { type Area } from "react-easy-crop";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,15 +15,18 @@ import {
   ZoomIn,
   Crop as CropIcon,
   Plus,
-  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAddressCoordinates } from "@/hooks/use-address-coordinates";
+import { AddressCoordinatesStatus } from "@/components/AddressCoordinatesStatus";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import {
   AddPlaceAPI,
   UpdatePlaceAPI,
   GetPlaceByIdAPI,
   GetPlaceCategoriesAPI,
 } from "@/services/Api/PlacesApi";
+import { cn } from "@/lib/utils";
 
 const VALID_PRICE_LEVELS = ["$", "$$", "$$$", "$$$$"];
 const IMAGE_BASE_URL =
@@ -38,11 +39,6 @@ const ALLOWED_IMAGE_TYPES = [
   "image/png",
 ];
 
-// ASSUMPTION — unconfirmed place-image-upload endpoint for the About
-// editor's inline images. Not the same as the featured/gallery upload,
-// which goes through explore/admin (see AddPlaceAPI/UpdatePlaceAPI).
-const PLACE_IMAGE_UPLOAD_ENDPOINT = `${IMAGE_BASE_URL}/api/v1/blog/upload-image`;
-
 // ↓↓↓ Only place to change the crop ratio. Final decision: 16:9. ↓↓↓
 const PLACE_IMAGE_RATIO_W = 16;
 const PLACE_IMAGE_RATIO_H = 9;
@@ -50,18 +46,7 @@ const PLACE_IMAGE_ASPECT = PLACE_IMAGE_RATIO_W / PLACE_IMAGE_RATIO_H;
 const PLACE_IMAGE_ASPECT_CSS = `${PLACE_IMAGE_RATIO_W}/${PLACE_IMAGE_RATIO_H}`;
 const PLACE_IMAGE_RATIO_LABEL = `${PLACE_IMAGE_RATIO_W}:${PLACE_IMAGE_RATIO_H}`;
 
-const cardStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e5eb",
-  boxShadow: "0 1px 3px rgba(16,29,48,0.06)",
-};
-const inputStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e5eb",
-  color: "#101d30",
-};
-const labelClass = "text-[11px] tracking-wider uppercase";
-const labelStyle = { color: "#8993a6" };
+const labelClass = "text-[11px] tracking-wider uppercase text-ink-subtle";
 
 interface Category {
   id: number;
@@ -132,29 +117,6 @@ const urlToFile = async (url: string, filename: string): Promise<File> => {
   return new File([blob], filename, { type: blob.type || "image/jpeg" });
 };
 
-const CUSTOM_STYLE_FORMATS = [
-  { title: "Insider Tip", block: "div", classes: "insider-tip", wrapper: true },
-  {
-    title: "Pull Quote",
-    block: "blockquote",
-    classes: "pull-quote",
-    wrapper: true,
-  },
-];
-
-const getAboutEditorContentStyle = () => `
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.6; color: #101d30; padding: 8px 12px; }
-  body > p:first-of-type::first-letter { float: left; font-family: Georgia, "Times New Roman", serif; font-size: 64px; line-height: 0.85; font-weight: 600; padding: 4px 8px 0 0; color: #101d30; }
-  .insider-tip { background: #FBF6E9; border-left: 3px solid #E4CE8F; border-radius: 8px; padding: 14px 16px; margin: 16px 0; }
-  .insider-tip::before { content: "Insider tip"; display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #a3874f; margin-bottom: 4px; }
-  blockquote.pull-quote { border-left: 3px solid #101d30; padding-left: 16px; margin: 20px 0; font-style: italic; font-size: 18px; color: #101d30; }
-  blockquote:not(.pull-quote) { border-left: 3px solid #d5d9e0; padding-left: 16px; margin: 16px 0; color: #6b7688; }
-  img { width: 100%; aspect-ratio: ${PLACE_IMAGE_ASPECT_CSS}; object-fit: cover; border-radius: 8px; margin: 16px 0; }
-  figure.image { margin: 16px 0; }
-  figure.image img { margin: 0; }
-  figure.image figcaption { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #9aa3b2; text-align: center; margin-top: 8px; }
-`;
-
 let photoKeyCounter = 0;
 const nextPhotoKey = () => `photo-${++photoKeyCounter}-${Date.now()}`;
 
@@ -183,6 +145,7 @@ export default function PlaceForm() {
   const [insiderTipInput, setInsiderTipInput] = useState("");
 
   const [address, setAddress] = useState("");
+  const mapPin = useAddressCoordinates();
   const [mapAddress, setMapAddress] = useState(""); // debounced copy of address, used only for the map embed below
   const [neighborhood, setNeighborhood] = useState("");
   const [phone, setPhone] = useState("");
@@ -233,35 +196,6 @@ export default function PlaceForm() {
     return () => clearTimeout(timer);
   }, [address]);
 
-  // useEffect(() => {
-  //   if (!address.trim() || address.trim().length < 6) return;
-  //   const timer = setTimeout(() => geocodeAddress(address), 900);
-  //   return () => clearTimeout(timer);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [address]);
-
-  // const geocodeAddress = async (addr: string) => {
-  //   if (!GOOGLE_MAPS_API_KEY) return;
-  //   try {
-  //     setGeocoding(true);
-  //     const res = await axios.get(
-  //       "https://maps.googleapis.com/maps/api/geocode/json",
-  //       {
-  //         params: { address: addr, key: GOOGLE_MAPS_API_KEY },
-  //       },
-  //     );
-  //     const location = res.data?.results?.[0]?.geometry?.location;
-  //     if (location) {
-  //       setLatitude(String(location.lat));
-  //       setLongitude(String(location.lng));
-  //     }
-  //   } catch (err) {
-  //     // silent — convenience only
-  //   } finally {
-  //     setGeocoding(false);
-  //   }
-  // };
-
   const fetchCategories = async () => {
     try {
       const res = await GetPlaceCategoriesAPI(token);
@@ -296,6 +230,7 @@ export default function PlaceForm() {
               : [],
         );
         setAddress(p.address || "");
+        mapPin.load(p.address || "", p.latitude, p.longitude);
         setNeighborhood(p.neighborhood || "");
         setPhone(p.phone || "");
         setEmail(p.email || "");
@@ -387,29 +322,6 @@ export default function PlaceForm() {
   const removeInsiderTip = (idx: number) => {
     setInsiderTips((prev) => prev.filter((_, i) => i !== idx));
   };
-
-
-
-  const handleAboutImageUpload = (blobInfo: any): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const formData = new FormData();
-      formData.append("images", blobInfo.blob(), blobInfo.filename());
-
-      fetch(PLACE_IMAGE_UPLOAD_ENDPOINT, {
-        method: "POST",
-        headers: { "x-access-token": token },
-        body: formData,
-      })
-        .then((res) => res.json())
-        .then((json) => {
-          if (!json?.success || !json?.data?.url) {
-            reject(json?.message || "Image upload failed.");
-            return;
-          }
-          resolve(`${IMAGE_BASE_URL}${json.data.url}`);
-        })
-        .catch(() => reject("Image upload failed. Please try again."));
-    });
 
   // --- Photo add flow: crop modal, queue-based for multi-select ---
   const openCropForFile = (file: File) => {
@@ -591,6 +503,12 @@ export default function PlaceForm() {
       }
 
       formData.append("address", address.trim());
+      // Looked up now if the address changed since it was last located.
+      const coordinates = await mapPin.locate(address);
+      if (coordinates) {
+        formData.append("latitude", coordinates.latitude);
+        formData.append("longitude", coordinates.longitude);
+      }
       if (neighborhood.trim())
         formData.append("neighborhood", neighborhood.trim());
       if (phone.trim()) formData.append("phone", phone.trim());
@@ -638,7 +556,12 @@ export default function PlaceForm() {
         : await AddPlaceAPI(formData, token);
 
       if (res.data?.success) {
-        toast({ title: isEdit ? "Place updated" : "Place created" });
+        toast({
+          title: isEdit ? "Place updated" : "Place created",
+          description: coordinates
+            ? undefined
+            : `The address couldn't be found on the map, so ${isEdit ? "its coordinates weren't updated" : "no coordinates were saved"}.`,
+        });
         navigate("/places");
       }
     } catch (err: any) {
@@ -656,8 +579,7 @@ export default function PlaceForm() {
     return (
       <div className="w-full px-6 py-16 flex justify-center">
         <Loader2
-          className="h-5 w-5 animate-spin"
-          style={{ color: "#9aa3b2" }}
+          className="h-5 w-5 animate-spin text-ink-faint"
         />
       </div>
     );
@@ -672,8 +594,7 @@ export default function PlaceForm() {
     <div className="w-full px-6 py-6 md:px-8 md:py-8">
       <button
         onClick={() => navigate("/places")}
-        className="flex items-center gap-1.5 text-sm mb-3 hover:opacity-70 transition-opacity"
-        style={{ color: "#6b7688" }}
+        className="flex items-center gap-1.5 text-sm mb-3 hover:opacity-70 transition-opacity text-ink-muted"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to places
@@ -682,12 +603,11 @@ export default function PlaceForm() {
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
         <div>
           <h1
-            className="text-[20px] font-semibold"
-            style={{ color: "#101d30" }}
+            className="text-[20px] font-semibold text-navy"
           >
             {isEdit ? "Edit place" : "Add place"}
           </h1>
-          <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
+          <p className="text-sm mt-1 text-ink-muted">
             {isEdit
               ? "Update this listing."
               : "Create a new listing for the Explore directory."}
@@ -697,8 +617,7 @@ export default function PlaceForm() {
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="h-10 px-5 rounded-lg font-semibold text-sm tracking-wide flex items-center gap-2 disabled:opacity-60"
-            style={{ background: "#E4CE8F", color: "#101d30" }}
+            className="h-10 px-5 rounded-lg font-semibold text-sm tracking-wide flex items-center gap-2 disabled:opacity-60 bg-gold-light text-navy"
           >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {submitting
@@ -710,103 +629,66 @@ export default function PlaceForm() {
         </div>
       </div>
 
-      <div className="rounded-2xl p-6 space-y-4 mb-5" style={cardStyle}>
+      <div className="rounded-2xl p-6 space-y-4 mb-5 bg-white border border-line shadow-card">
         <h2
-          className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: "#8993a6" }}
+          className="text-[13px] font-semibold uppercase tracking-wider text-ink-subtle"
         >
           Basic info
         </h2>
         <div className="space-y-1.5">
-          <Label className={labelClass} style={labelStyle}>
-            Name <span style={{ color: "#c9a227" }}>*</span>
+          <Label className={`${labelClass} leading-6`}>
+            Name <span className="text-gold">*</span>
           </Label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Tigertail Beach"
             className="h-10 rounded-lg text-[14px]"
-            style={inputStyle}
           />
         </div>
         <div className="space-y-1.5">
-          <Label className={labelClass} style={labelStyle}>
-            Short description <span style={{ color: "#c9a227" }}>*</span>
+          <Label className={`${labelClass} leading-6`}>
+            Short description <span className="text-gold">*</span>
           </Label>
           <textarea
             value={shortDescription}
             onChange={(e) => setShortDescription(e.target.value)}
             placeholder="One or two sentences for cards and previews"
             rows={2}
-            className="w-full rounded-lg text-[14px] px-3 py-2.5 outline-none resize-none"
-            style={inputStyle}
+            className="w-full rounded-lg text-[14px] px-3 py-2.5 outline-hidden resize-none bg-white border border-line text-navy"
           />
         </div>
       </div>
 
-      <div className="rounded-2xl p-6 md:p-8 space-y-3 mb-5" style={cardStyle}>
+      <div className="rounded-2xl p-6 md:p-8 space-y-3 mb-5 bg-white border border-line shadow-card">
         <h2
-          className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: "#8993a6" }}
+          className="text-[13px] font-semibold uppercase tracking-wider text-ink-subtle"
         >
           About
         </h2>
         <div
-          className="rounded-lg overflow-hidden"
-          style={{ border: "1px solid #e2e5eb" }}
+          className="rounded-lg overflow-hidden border border-line"
         >
-          <Editor
-            tinymceScriptSrc="/tinymce/tinymce.min.js"
-            licenseKey="gpl"
+          <RichTextEditor
             value={about}
-            onEditorChange={(newContent) => setAbout(newContent)}
-            init={{
-              height: 500,
-              menubar: false,
-              plugins: [
-                "advlist",
-                "autolink",
-                "lists",
-                "link",
-                "image",
-                "charmap",
-                "preview",
-                "searchreplace",
-                "visualblocks",
-                "code",
-                "fullscreen",
-                "media",
-                "table",
-                "wordcount",
-              ],
-              toolbar:
-                "undo redo | styles | bold italic | " +
-                "alignleft aligncenter alignright | " +
-                "bullist numlist outdent indent | " +
-                "link image media | blockquote | code fullscreen",
-              style_formats: CUSTOM_STYLE_FORMATS,
-              style_formats_merge: true,
-              content_style: getAboutEditorContentStyle(),
-              images_upload_handler: handleAboutImageUpload,
-              automatic_uploads: true,
-              file_picker_types: "image",
-            }}
+            onChange={setAbout}
+            height={500}
+            imageAspectRatio={PLACE_IMAGE_ASPECT_CSS}
           />
         </div>
-        <p className="text-[11px]" style={{ color: "#c2c7d1" }}>
+        <p className="text-[11px] text-ink-ghost">
           Drop or paste images directly into the text — they upload
           automatically and display at a consistent {PLACE_IMAGE_RATIO_LABEL}{" "}
-          ratio. Use the "Styles" dropdown for headings, Insider Tip callouts,
+          ratio. Use the "Formats" menu for headings, Insider Tip callouts,
           and Pull Quotes.
         </p>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-5">
-          <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
+          <div className="rounded-2xl p-6 space-y-5 bg-white border border-line shadow-card">
             <h2
-              className="text-[13px] font-semibold uppercase tracking-wider"
-              style={{ color: "#8993a6" }}
+              className="text-[13px] font-semibold uppercase tracking-wider text-ink-subtle"
             >
               What to expect
             </h2>
@@ -817,7 +699,6 @@ export default function PlaceForm() {
                 onChange={(e) => setExpectTitleInput(e.target.value)}
                 placeholder="Title, e.g. Wildlife and shelling"
                 className="h-10 rounded-lg text-[14px]"
-                style={inputStyle}
               />
 
               <textarea
@@ -825,8 +706,7 @@ export default function PlaceForm() {
                 onChange={(e) => setExpectDescriptionInput(e.target.value)}
                 placeholder="Description, e.g. Spot native wildlife and search for shells along the shoreline."
                 rows={3}
-                className="w-full rounded-lg text-[14px] px-3 py-2.5 outline-none resize-none"
-                style={inputStyle}
+                className="w-full rounded-lg text-[14px] px-3 py-2.5 outline-hidden resize-none bg-white border border-line text-navy"
               />
 
               <button
@@ -835,11 +715,7 @@ export default function PlaceForm() {
                 disabled={
                   !expectTitleInput.trim() || !expectDescriptionInput.trim()
                 }
-                className="h-9 px-3 rounded-lg text-xs font-medium disabled:opacity-50"
-                style={{
-                  background: "#f2f3f6",
-                  color: "#101d30",
-                }}
+                className="h-9 px-3 rounded-lg text-xs font-medium disabled:opacity-50 bg-fill text-navy"
               >
                 <Plus className="h-3.5 w-3.5 inline mr-1" />
                 Add expectation
@@ -851,31 +727,24 @@ export default function PlaceForm() {
                 {whatToExpect.map((item, i) => (
                   <div
                     key={i}
-                    className="rounded-lg p-3 relative"
-                    style={{
-                      background: "#f8f9fb",
-                      border: "1px solid #e2e5eb",
-                    }}
+                    className="rounded-lg p-3 relative bg-surface-muted border border-line"
                   >
                     <button
                       type="button"
                       onClick={() => removeWhatToExpect(i)}
-                      className="absolute top-2 right-2"
-                      style={{ color: "#8993a6" }}
+                      className="absolute top-2 right-2 text-ink-subtle"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
 
                     <p
-                      className="text-sm font-semibold pr-6"
-                      style={{ color: "#101d30" }}
+                      className="text-sm font-semibold pr-6 text-navy"
                     >
                       {item.title}
                     </p>
 
                     <p
-                      className="text-xs mt-1 pr-6"
-                      style={{ color: "#6b7688" }}
+                      className="text-xs mt-1 pr-6 text-ink-muted"
                     >
                       {item.description}
                     </p>
@@ -885,10 +754,9 @@ export default function PlaceForm() {
             )}
           </div>
 
-          <div className="rounded-2xl p-6 space-y-4" style={cardStyle}>
+          <div className="rounded-2xl p-6 space-y-4 bg-white border border-line shadow-card">
             <h2
-              className="text-[13px] font-semibold uppercase tracking-wider"
-              style={{ color: "#8993a6" }}
+              className="text-[13px] font-semibold uppercase tracking-wider text-ink-subtle"
             >
               Insider tips
             </h2>
@@ -905,17 +773,12 @@ export default function PlaceForm() {
                 }}
                 placeholder="e.g. Arrive early for easier parking"
                 className="h-10 rounded-lg text-[14px] flex-1"
-                style={inputStyle}
               />
 
               <button
                 type="button"
                 onClick={addInsiderTip}
-                className="h-10 px-3 rounded-lg flex items-center justify-center"
-                style={{
-                  background: "#f2f3f6",
-                  color: "#101d30",
-                }}
+                className="h-10 px-3 rounded-lg flex items-center justify-center bg-fill text-navy"
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -926,20 +789,16 @@ export default function PlaceForm() {
                 {insiderTips.map((tip, i) => (
                   <div
                     key={i}
-                    className="flex items-start justify-between gap-3 rounded-lg p-3"
-                    style={{
-                      background: "#f8f9fb",
-                      border: "1px solid #e2e5eb",
-                    }}
+                    className="flex items-start justify-between gap-3 rounded-lg p-3 bg-surface-muted border border-line"
                   >
-                    <p className="text-sm" style={{ color: "#101d30" }}>
+                    <p className="text-sm text-navy">
                       {tip}
                     </p>
 
                     <button
                       type="button"
                       onClick={() => removeInsiderTip(i)}
-                      style={{ color: "#8993a6" }}
+                      className="text-ink-subtle"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -950,15 +809,13 @@ export default function PlaceForm() {
           </div>
 
           {/* Media — unified photo list, first = featured */}
-          <div className="rounded-2xl p-6 space-y-4" style={cardStyle}>
+          <div className="rounded-2xl p-6 space-y-4 bg-white border border-line shadow-card">
             <h2
-              className="text-[13px] font-semibold uppercase tracking-wider"
-              style={{ color: "#8993a6" }}
+              className="text-[13px] font-semibold uppercase tracking-wider text-ink-subtle"
             >
               Photos{" "}
               <span
-                className="normal-case font-normal"
-                style={{ color: "#c2c7d1" }}
+                className="normal-case font-normal text-ink-ghost"
               >
                 ({photos.length}/{MAX_GALLERY_IMAGES})
               </span>
@@ -968,15 +825,11 @@ export default function PlaceForm() {
               {photos.map((photo, idx) => (
                 <div
                   key={photo.key}
-                  className="relative"
-                  style={{ width: 128 }}
+                  className="relative w-[128px]"
                 >
                   <div
-                    className="relative rounded-lg overflow-hidden"
-                    style={{
-                      ...cardStyle,
-                      aspectRatio: PLACE_IMAGE_ASPECT_CSS,
-                    }}
+                    className="relative rounded-lg overflow-hidden bg-white border border-line shadow-card"
+                    style={{ aspectRatio: PLACE_IMAGE_ASPECT_CSS }}
                   >
                     <img
                       src={photo.previewUrl}
@@ -985,18 +838,13 @@ export default function PlaceForm() {
                     />
                     <button
                       onClick={() => removePhoto(photo.key)}
-                      className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full flex items-center justify-center"
-                      style={{
-                        background: "rgba(16,29,48,0.7)",
-                        color: "#fff",
-                      }}
+                      className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full flex items-center justify-center bg-navy/70 text-white"
                     >
                       <X className="h-3 w-3" />
                     </button>
                     {idx === 0 && (
                       <span
-                        className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide"
-                        style={{ background: "#E4CE8F", color: "#101d30" }}
+                        className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-gold-light text-navy"
                       >
                         Featured
                       </span>
@@ -1005,8 +853,7 @@ export default function PlaceForm() {
                   {idx !== 0 && (
                     <button
                       onClick={() => makeFeatured(photo.key)}
-                      className="mt-1.5 w-full text-[10px] font-medium py-1 rounded"
-                      style={{ background: "#f2f3f6", color: "#6b7688" }}
+                      className="mt-1.5 w-full text-[10px] font-medium py-1 rounded bg-fill text-ink-muted"
                     >
                       Set as featured
                     </button>
@@ -1016,16 +863,11 @@ export default function PlaceForm() {
 
               {photos.length < MAX_GALLERY_IMAGES && (
                 <label
-                  className="flex flex-col items-center justify-center gap-1 rounded-lg cursor-pointer flex-shrink-0"
-                  style={{
-                    width: 128,
-                    aspectRatio: PLACE_IMAGE_ASPECT_CSS,
-                    background: "#f8f9fb",
-                    border: "1px dashed #d5d9e0",
-                  }}
+                  className="flex flex-col items-center justify-center gap-1 rounded-lg cursor-pointer shrink-0 w-[128px] bg-surface-muted border border-dashed border-line-strong"
+                  style={{ aspectRatio: PLACE_IMAGE_ASPECT_CSS }}
                 >
-                  <ImagePlus className="h-5 w-5" style={{ color: "#9aa3b2" }} />
-                  <span className="text-[11px]" style={{ color: "#9aa3b2" }}>
+                  <ImagePlus className="h-5 w-5 text-ink-faint" />
+                  <span className="text-[11px] text-ink-faint">
                     Add photo
                   </span>
                   <input
@@ -1040,8 +882,7 @@ export default function PlaceForm() {
             </div>
 
             <p
-              className="text-[11px] flex items-center gap-1"
-              style={{ color: "#c2c7d1" }}
+              className="text-[11px] flex items-center gap-1 text-ink-ghost"
             >
               <CropIcon className="h-3 w-3" />
               JPEG, JPG, WEBP, or PNG · up to {MAX_GALLERY_IMAGES} photos · each
@@ -1052,10 +893,9 @@ export default function PlaceForm() {
         </div>
 
         <div className="space-y-5">
-          <div className="rounded-2xl p-5" style={cardStyle}>
+          <div className="rounded-2xl p-5 bg-white border border-line shadow-card">
             <p
-              className={labelClass}
-              style={{ ...labelStyle, marginBottom: 10 }}
+              className={`${labelClass} mb-2.5`}
             >
               Categories
             </p>
@@ -1068,20 +908,7 @@ export default function PlaceForm() {
                       key={cat.id}
                       type="button"
                       onClick={() => toggleCategory(cat.id)}
-                      className="px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
-                      style={
-                        active
-                          ? {
-                              background: "#fbf3de",
-                              color: "#a3874f",
-                              border: "1px solid #e4ce8f",
-                            }
-                          : {
-                              background: "#f2f3f6",
-                              color: "#6b7688",
-                              border: "1px solid transparent",
-                            }
-                      }
+                      className={cn("px-2.5 py-1 rounded-full text-xs font-medium transition-colors border", active ? "bg-gold-soft text-gold-dark border-gold-light" : "bg-fill text-ink-muted border-transparent")}
                     >
                       {cat.name}
                     </button>
@@ -1089,25 +916,25 @@ export default function PlaceForm() {
                 })}
               </div>
             ) : (
-              <p className="text-sm" style={{ color: "#c2c7d1" }}>
+              <p className="text-sm text-ink-ghost">
                 No categories loaded.
               </p>
             )}
           </div>
 
-          <div className="rounded-2xl p-5 space-y-3" style={cardStyle}>
-            <p className={labelClass} style={labelStyle}>
-              Location <span style={{ color: "#c9a227" }}>*</span>
+          <div className="rounded-2xl p-5 space-y-3 bg-white border border-line shadow-card">
+            <p className={labelClass}>
+              Location <span className="text-gold">*</span>
             </p>
 
             <Input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
+              onBlur={(e) => mapPin.locate(e.target.value)}
               placeholder="Full street address (required)"
               required
               aria-required="true"
               className="h-9 rounded-lg text-[13.5px]"
-              style={inputStyle}
             />
 
             <Input
@@ -1115,7 +942,6 @@ export default function PlaceForm() {
               onChange={(e) => setNeighborhood(e.target.value)}
               placeholder="Neighborhood (optional)"
               className="h-9 rounded-lg text-[13.5px]"
-              style={inputStyle}
             />
 
             {/* Free, no-key map embed — purely a view of the address typed
@@ -1123,8 +949,7 @@ export default function PlaceForm() {
                 anything through the map itself. */}
             {mapAddress ? (
               <div
-                className="rounded-lg overflow-hidden"
-                style={{ border: "1px solid #e2e5eb" }}
+                className="rounded-lg overflow-hidden border border-line"
               >
                 <iframe
                   key={mapAddress}
@@ -1132,34 +957,36 @@ export default function PlaceForm() {
                   src={`https://www.google.com/maps?q=${encodeURIComponent(mapAddress)}&output=embed`}
                   width="100%"
                   height="160"
-                  style={{ border: 0, display: "block" }}
+                  className="border-0 block"
                   loading="lazy"
                 />
               </div>
             ) : (
               <div
-                className="rounded-lg flex items-center justify-center gap-1.5"
-                style={{
-                  height: 160,
-                  background: "#f8f9fb",
-                  border: "1px dashed #d5d9e0",
-                }}
+                className="rounded-lg flex items-center justify-center gap-1.5 h-[160px] bg-surface-muted border border-dashed border-line-strong"
               >
-                <MapPinned className="h-4 w-4" style={{ color: "#9aa3b2" }} />
-                <span className="text-xs" style={{ color: "#9aa3b2" }}>
+                <MapPinned className="h-4 w-4 text-ink-faint" />
+                <span className="text-xs text-ink-faint">
                   Map appears once an address is entered
                 </span>
               </div>
             )}
 
-            <p className="text-[11px]" style={{ color: "#c2c7d1" }}>
+            <AddressCoordinatesStatus
+              address={address}
+              locatedAddress={mapPin.address}
+              status={mapPin.status}
+              coordinates={mapPin.coordinates}
+            />
+
+            <p className="text-[11px] text-ink-ghost">
               Required. Itinerary maps pin this listing by its name and
               address, so enter the complete street address.
             </p>
           </div>
 
-          <div className="rounded-2xl p-5 space-y-3" style={cardStyle}>
-            <p className={labelClass} style={labelStyle}>
+          <div className="rounded-2xl p-5 space-y-3 bg-white border border-line shadow-card">
+            <p className={labelClass}>
               Contact
             </p>
             <Input
@@ -1167,26 +994,23 @@ export default function PlaceForm() {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Phone"
               className="h-9 rounded-lg text-[13.5px]"
-              style={inputStyle}
             />
             <Input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
               className="h-9 rounded-lg text-[13.5px]"
-              style={inputStyle}
             />
             <Input
               value={websiteUrl}
               onChange={(e) => setWebsiteUrl(e.target.value)}
               placeholder="Website URL"
               className="h-9 rounded-lg text-[13.5px]"
-              style={inputStyle}
             />
           </div>
 
-          <div className="rounded-2xl p-5 space-y-3" style={cardStyle}>
-            <p className={labelClass} style={labelStyle}>
+          <div className="rounded-2xl p-5 space-y-3 bg-white border border-line shadow-card">
+            <p className={labelClass}>
               Practical info
             </p>
             <Input
@@ -1194,35 +1018,30 @@ export default function PlaceForm() {
               onChange={(e) => setHours(e.target.value)}
               placeholder="Hours, e.g. 9am–6pm daily"
               className="h-9 rounded-lg text-[13.5px]"
-              style={inputStyle}
             />
             <Input
               value={fees}
               onChange={(e) => setFees(e.target.value)}
               placeholder="Fees, e.g. $8 parking fee"
               className="h-9 rounded-lg text-[13.5px]"
-              style={inputStyle}
             />
             <Input
               value={parking}
               onChange={(e) => setParking(e.target.value)}
               placeholder="Parking, e.g. Lot on-site, fills by 10am"
               className="h-9 rounded-lg text-[13.5px]"
-              style={inputStyle}
             />
             <Input
               value={bestTimeToVisit}
               onChange={(e) => setBestTimeToVisit(e.target.value)}
               placeholder="Best time to visit, e.g. Early morning, low tide"
               className="h-9 rounded-lg text-[13.5px]"
-              style={inputStyle}
             />
           </div>
 
-          <div className="rounded-2xl p-5" style={cardStyle}>
+          <div className="rounded-2xl p-5 bg-white border border-line shadow-card">
             <p
-              className={labelClass}
-              style={{ ...labelStyle, marginBottom: 10 }}
+              className={`${labelClass} mb-2.5`}
             >
               Price level
             </p>
@@ -1234,12 +1053,7 @@ export default function PlaceForm() {
                   onClick={() =>
                     setPriceLevel(priceLevel === level ? "" : level)
                   }
-                  className="h-9 flex-1 rounded-lg text-sm font-medium"
-                  style={
-                    priceLevel === level
-                      ? { background: "#101d30", color: "#E4CE8F" }
-                      : { background: "#f2f3f6", color: "#6b7688" }
-                  }
+                  className={cn("h-9 flex-1 rounded-lg text-sm font-medium", priceLevel === level ? "bg-navy text-gold-light" : "bg-fill text-ink-muted")}
                 >
                   {level}
                 </button>
@@ -1247,8 +1061,8 @@ export default function PlaceForm() {
             </div>
           </div>
 
-          <div className="rounded-2xl p-5 space-y-4" style={cardStyle}>
-            <p className={labelClass} style={labelStyle}>
+          <div className="rounded-2xl p-5 space-y-4 bg-white border border-line shadow-card">
+            <p className={labelClass}>
               Flags
             </p>
             <button
@@ -1257,19 +1071,16 @@ export default function PlaceForm() {
               className="w-full flex items-center justify-between"
             >
               <span
-                className="flex items-center gap-2 text-sm"
-                style={{ color: "#101d30" }}
+                className="flex items-center gap-2 text-sm text-navy"
               >
-                <Star className="h-3.5 w-3.5" style={{ color: "#8993a6" }} />
+                <Star className="h-3.5 w-3.5 text-ink-subtle" />
                 Featured
               </span>
               <span
-                className="h-5 w-9 rounded-full relative transition-colors flex-shrink-0"
-                style={{ background: isFeatured ? "#E4CE8F" : "#e2e5eb" }}
+                className={cn("h-5 w-9 rounded-full relative transition-colors shrink-0", isFeatured ? "bg-gold-light" : "bg-line")}
               >
                 <span
-                  className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
-                  style={{ left: isFeatured ? 18 : 2 }}
+                  className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all", isFeatured ? "left-4.5" : "left-0.5")}
                 />
               </span>
             </button>
@@ -1280,26 +1091,23 @@ export default function PlaceForm() {
               className="w-full flex items-center justify-between"
             >
               <span
-                className="flex items-center gap-2 text-sm"
-                style={{ color: "#101d30" }}
+                className="flex items-center gap-2 text-sm text-navy"
               >
-                <Award className="h-3.5 w-3.5" style={{ color: "#8993a6" }} />
+                <Award className="h-3.5 w-3.5 text-ink-subtle" />
                 Top pick
               </span>
               <span
-                className="h-5 w-9 rounded-full relative transition-colors flex-shrink-0"
-                style={{ background: isTopPick ? "#E4CE8F" : "#e2e5eb" }}
+                className={cn("h-5 w-9 rounded-full relative transition-colors shrink-0", isTopPick ? "bg-gold-light" : "bg-line")}
               >
                 <span
-                  className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
-                  style={{ left: isTopPick ? 18 : 2 }}
+                  className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all", isTopPick ? "left-4.5" : "left-0.5")}
                 />
               </span>
             </button>
 
             {isTopPick && (
               <div className="space-y-1.5 pt-1">
-                <Label className={labelClass} style={labelStyle}>
+                <Label className={`${labelClass} leading-6`}>
                   Top pick rank
                 </Label>
                 <Input
@@ -1308,9 +1116,8 @@ export default function PlaceForm() {
                   placeholder="e.g. 1"
                   type="number"
                   className="h-9 rounded-lg text-[13.5px]"
-                  style={inputStyle}
                 />
-                <p className="text-[10.5px]" style={{ color: "#c2c7d1" }}>
+                <p className="text-[10.5px] text-ink-ghost">
                   Nothing currently prevents two places from sharing the same
                   rank — see note in chat.
                 </p>
@@ -1322,33 +1129,26 @@ export default function PlaceForm() {
 
       {cropModalOpen && rawImageSrc && (
         <div
-          className="fixed inset-0 flex items-center justify-center px-4"
-          style={{ background: "rgba(16,29,48,0.6)", zIndex: 100000 }}
+          className="fixed inset-0 flex items-center justify-center px-4 bg-navy/60 z-[100000]"
         >
           <div
-            className="w-full max-w-md rounded-2xl overflow-hidden"
-            style={{
-              background: "#ffffff",
-              boxShadow: "0 24px 60px -16px rgba(16,29,48,0.4)",
-            }}
+            className="w-full max-w-md rounded-2xl overflow-hidden bg-white shadow-modal"
           >
             <div className="px-6 pt-6 pb-4">
               <h3
-                className="text-[16px] font-semibold flex items-center gap-2"
-                style={{ color: "#101d30" }}
+                className="text-[16px] font-semibold flex items-center gap-2 text-navy"
               >
-                <CropIcon className="h-4 w-4" style={{ color: "#c9a227" }} />
+                <CropIcon className="h-4 w-4 text-gold" />
                 Crop photo
               </h3>
-              <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
+              <p className="text-sm mt-1 text-ink-muted">
                 {queueProgressLabel}Drag to reposition, use the slider to zoom.
                 The frame is locked at {PLACE_IMAGE_RATIO_LABEL}.
               </p>
             </div>
 
             <div
-              className="relative w-full"
-              style={{ height: 380, background: "#101d30" }}
+              className="relative w-full h-[380px] bg-navy"
             >
               <Cropper
                 image={rawImageSrc}
@@ -1366,8 +1166,7 @@ export default function PlaceForm() {
 
             <div className="px-6 py-4 flex items-center gap-3">
               <ZoomIn
-                className="h-4 w-4 flex-shrink-0"
-                style={{ color: "#9aa3b2" }}
+                className="h-4 w-4 shrink-0 text-ink-faint"
               />
               <input
                 type="range"
@@ -1384,16 +1183,14 @@ export default function PlaceForm() {
               <button
                 onClick={handleCropCancel}
                 disabled={cropping}
-                className="flex-1 h-10 rounded-lg text-sm font-medium disabled:opacity-50"
-                style={{ background: "#f2f3f6", color: "#101d30" }}
+                className="flex-1 h-10 rounded-lg text-sm font-medium disabled:opacity-50 bg-fill text-navy"
               >
                 {addQueue.length > 1 ? "Skip" : "Cancel"}
               </button>
               <button
                 onClick={handleConfirmCrop}
                 disabled={cropping || !croppedAreaPixels}
-                className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60"
-                style={{ background: "#E4CE8F", color: "#101d30" }}
+                className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60 bg-gold-light text-navy"
               >
                 {cropping ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {cropping ? "Applying..." : "Apply crop"}

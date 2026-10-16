@@ -1,7 +1,6 @@
 /** @format */
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Editor } from "@tinymce/tinymce-react";
+import { useNavigate, useParams } from "react-router";
 import Cropper, { type Area } from "react-easy-crop";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,19 +12,18 @@ import {
   Star,
   Calendar,
   Clock,
-  Trash2,
-  AlertTriangle,
   ZoomIn,
   Crop as CropIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import {
   AddBlogAPI,
   UpdateBlogAPI,
   GetBlogByIdAPI,
-  DeleteBlogAPI,
 } from "@/services/Api/BlogApi";
 import { GetBlogCategoriesAPI } from "@/services/Api/BlogCategoryApi";
+import { cn } from "@/lib/utils";
 
 const IMAGE_BASE_URL =
   import.meta.env.VITE_IMAGE_BASE_URL || "https://api.themarcopassport.com";
@@ -90,18 +88,7 @@ const getCroppedImageFile = async (
   });
 };
 
-const cardStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e5eb",
-  boxShadow: "0 1px 3px rgba(16,29,48,0.06)",
-};
-const inputStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e5eb",
-  color: "#101d30",
-};
-const labelClass = "text-[11px] tracking-wider uppercase";
-const labelStyle = { color: "#8993a6" };
+const labelClass = "text-[11px] leading-6 tracking-wider uppercase text-ink-subtle";
 
 interface Category {
   id: number;
@@ -124,42 +111,9 @@ const splitDateTime = (d: Date) => {
   return { dateStr, hour12, minute, ampm };
 };
 
-// Named styles an admin can apply from the editor's "Styles" dropdown.
-// Adding a new visual treatment later is one more entry here plus one
-// matching CSS rule below and on the live site.
-const CUSTOM_STYLE_FORMATS = [
-  {
-    title: "Insider Tip",
-    block: "div",
-    classes: "insider-tip",
-    wrapper: true,
-  },
-  {
-    title: "Pull Quote",
-    block: "blockquote",
-    classes: "pull-quote",
-    wrapper: true,
-  },
-];
-
 // Content images are constrained to this ratio via CSS (object-fit:
 // cover), not physically cropped before upload.
 const CONTENT_IMAGE_ASPECT_RATIO = "16 / 9";
-
-// Editor WYSIWYG preview only — keep in sync with article-content.css
-// and the live frontend's article stylesheet.
-const EDITOR_CONTENT_STYLE = `
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.6; color: #101d30; padding: 8px 12px; }
-  body > p:first-of-type::first-letter { float: left; font-family: Georgia, "Times New Roman", serif; font-size: 64px; line-height: 0.85; font-weight: 600; padding: 4px 8px 0 0; color: #101d30; }
-  .insider-tip { background: #FBF6E9; border-left: 3px solid #E4CE8F; border-radius: 8px; padding: 14px 16px; margin: 16px 0; }
-  .insider-tip::before { content: "Insider tip"; display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #a3874f; margin-bottom: 4px; }
-  blockquote.pull-quote { border-left: 3px solid #101d30; padding-left: 16px; margin: 20px 0; font-style: italic; font-size: 18px; color: #101d30; }
-  blockquote:not(.pull-quote) { border-left: 3px solid #d5d9e0; padding-left: 16px; margin: 16px 0; color: #6b7688; }
-  img { width: 100%; aspect-ratio: ${CONTENT_IMAGE_ASPECT_RATIO}; object-fit: cover; border-radius: 8px; margin: 16px 0; }
-  figure.image { margin: 16px 0; }
-  figure.image img { margin: 0; }
-  figure.image figcaption { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #9aa3b2; text-align: center; margin-top: 8px; }
-`;
 
 export default function BlogForm() {
   const { id } = useParams();
@@ -204,10 +158,6 @@ export default function BlogForm() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [cropping, setCropping] = useState(false);
-
-  // Delete (edit mode only)
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const token = localStorage.getItem("token") || "";
 
@@ -319,29 +269,6 @@ export default function BlogForm() {
     }
   };
 
-  const handleEditorImageUpload = (blobInfo: any): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const formData = new FormData();
-      formData.append("images", blobInfo.blob(), blobInfo.filename());
-
-      fetch(`${IMAGE_BASE_URL}/api/v1/blog/upload-image`, {
-        method: "POST",
-        headers: {
-          "x-access-token": token,
-        },
-        body: formData,
-      })
-        .then((res) => res.json())
-        .then((json) => {
-          if (!json?.success || !json?.data?.url) {
-            reject(json?.message || "Image upload failed.");
-            return;
-          }
-          resolve(`${IMAGE_BASE_URL}${json.data.url}`);
-        })
-        .catch(() => reject("Image upload failed. Please try again."));
-    });
-
   const getPublishedAtDate = (): Date | null => {
     if (!publishedDate) return null;
     const [y, m, d] = publishedDate.split("-").map(Number);
@@ -404,33 +331,11 @@ export default function BlogForm() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!id) return;
-    try {
-      setDeleting(true);
-      const res = await DeleteBlogAPI(id, token);
-      if (res.data?.success) {
-        toast({ title: "Blog deleted" });
-        navigate("/blogs");
-      }
-    } catch (err: any) {
-      toast({
-        title: "Failed to delete blog",
-        description: err.response?.data?.message || "Something went wrong.",
-        variant: "destructive",
-      });
-    } finally {
-      setDeleting(false);
-      setShowDeleteModal(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="w-full px-6 py-16 flex justify-center">
         <Loader2
-          className="h-5 w-5 animate-spin"
-          style={{ color: "#9aa3b2" }}
+          className="h-5 w-5 animate-spin text-ink-faint"
         />
       </div>
     );
@@ -440,8 +345,7 @@ export default function BlogForm() {
     <div className="w-full px-6 py-6 md:px-8 md:py-8">
       <button
         onClick={() => navigate("/blogs")}
-        className="flex items-center gap-1.5 text-sm mb-3 hover:opacity-70 transition-opacity"
-        style={{ color: "#6b7688" }}
+        className="flex items-center gap-1.5 text-sm mb-3 hover:opacity-70 transition-opacity text-ink-muted"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to blogs
@@ -450,33 +354,21 @@ export default function BlogForm() {
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
         <div>
           <h1
-            className="text-[20px] font-semibold"
-            style={{ color: "#101d30" }}
+            className="text-[20px] font-semibold text-navy"
           >
             {isEdit ? "Edit blog" : "Add blog"}
           </h1>
-          <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
+          <p className="text-sm mt-1 text-ink-muted">
             {isEdit
               ? "Update this article."
               : "Write a new article for the Marco Passport."}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* {isEdit && (
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="h-10 px-4 rounded-lg font-semibold text-sm tracking-wide flex items-center gap-2"
-              style={{ background: "#fbeceb", color: "#c25b4a" }}
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </button>
-          )} */}
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="h-10 px-5 rounded-lg font-semibold text-sm tracking-wide flex items-center gap-2 disabled:opacity-60"
-            style={{ background: "#E4CE8F", color: "#101d30" }}
+            className="h-10 px-5 rounded-lg font-semibold text-sm tracking-wide flex items-center gap-2 disabled:opacity-60 bg-gold-light text-navy"
           >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {submitting ? "Saving..." : isEdit ? "Save changes" : "Create blog"}
@@ -485,91 +377,56 @@ export default function BlogForm() {
       </div>
 
       <div className="space-y-5">
-        <div className="rounded-2xl p-6 md:p-8 space-y-5" style={cardStyle}>
+        <div className="rounded-2xl p-6 md:p-8 space-y-5 bg-white border border-line shadow-card">
           <h2
-            className="text-[13px] font-semibold uppercase tracking-wider"
-            style={{ color: "#8993a6" }}
+            className="text-[13px] font-semibold uppercase tracking-wider text-ink-subtle"
           >
             Content
           </h2>
 
           <div className="space-y-1.5">
-            <Label className={labelClass} style={labelStyle}>
-              Title <span style={{ color: "#c9a227" }}>*</span>
+            <Label className={labelClass}>
+              Title <span className="text-gold">*</span>
             </Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. A First-Timer's Guide to Marco Island"
               className="h-10 rounded-lg text-[14px]"
-              style={inputStyle}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className={labelClass} style={labelStyle}>
-              Description <span style={{ color: "#c9a227" }}>*</span>
+            <Label className={labelClass}>
+              Description <span className="text-gold">*</span>
             </Label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="One or two sentences shown in previews and cards"
               rows={2}
-              className="w-full rounded-lg text-[14px] px-3 py-2.5 outline-none resize-none"
-              style={inputStyle}
+              className="w-full rounded-lg text-[14px] px-3 py-2.5 outline-hidden resize-none bg-white border border-line text-navy"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className={labelClass} style={labelStyle}>
-              Content <span style={{ color: "#c9a227" }}>*</span>
+            <Label className={labelClass}>
+              Content <span className="text-gold">*</span>
             </Label>
             <div
-              className="rounded-lg overflow-hidden"
-              style={{ border: "1px solid #e2e5eb" }}
+              className="rounded-lg overflow-hidden border border-line"
             >
-              <Editor
-                tinymceScriptSrc="/tinymce/tinymce.min.js"
-                licenseKey="gpl"
+              <RichTextEditor
                 value={content}
-                onEditorChange={(newContent) => setContent(newContent)}
-                init={{
-                  height: 640,
-                  menubar: false,
-                  plugins: [
-                    "advlist",
-                    "autolink",
-                    "lists",
-                    "link",
-                    "image",
-                    "charmap",
-                    "preview",
-                    "searchreplace",
-                    "visualblocks",
-                    "code",
-                    "fullscreen",
-                    "media",
-                    "table",
-                    "wordcount",
-                  ],
-                  toolbar:
-                    "undo redo | styles | bold italic | " +
-                    "alignleft aligncenter alignright | " +
-                    "bullist numlist outdent indent | " +
-                    "link image media | blockquote | code fullscreen",
-                  style_formats: CUSTOM_STYLE_FORMATS,
-                  style_formats_merge: true,
-                  content_style: EDITOR_CONTENT_STYLE,
-                  images_upload_handler: handleEditorImageUpload,
-                  automatic_uploads: true,
-                  file_picker_types: "image",
-                }}
+                onChange={setContent}
+                height={640}
+                imageAspectRatio={CONTENT_IMAGE_ASPECT_RATIO}
               />
             </div>
-            <p className="text-[11px]" style={{ color: "#c2c7d1" }}>
+            <p className="text-[11px] text-ink-ghost">
               Drop or paste images directly into the article — they upload
               automatically and display at a consistent 16:9 ratio to match the
-              rest of the site. Use the "Styles" dropdown for headings, Insider
+              rest of the site. Use the "Formats" menu for headings, Insider
               Tip callouts, and Pull Quotes.
             </p>
           </div>
@@ -577,17 +434,16 @@ export default function BlogForm() {
 
         {/* Featured image + Details side by side on large screens */}
         <div className="grid gap-5 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] items-start">
-          <div className="rounded-2xl p-6 md:p-8 space-y-3" style={cardStyle}>
+          <div className="rounded-2xl p-6 md:p-8 space-y-3 bg-white border border-line shadow-card">
             <h2
-              className="text-[13px] font-semibold uppercase tracking-wider"
-              style={{ color: "#8993a6" }}
+              className="text-[13px] font-semibold uppercase tracking-wider text-ink-subtle"
             >
               Featured image
             </h2>
             {featuredPreview || existingImagePath ? (
               <div
-                className="relative w-full rounded-lg overflow-hidden"
-                style={{ ...cardStyle, aspectRatio: FEATURED_IMAGE_ASPECT_CSS }}
+                className="relative w-full rounded-lg overflow-hidden bg-white border border-line shadow-card"
+                style={{ aspectRatio: FEATURED_IMAGE_ASPECT_CSS }}
               >
                 <img
                   src={featuredPreview || `${IMAGE_BASE_URL}${existingImagePath}`}
@@ -600,8 +456,7 @@ export default function BlogForm() {
                     setFeaturedPreview(null);
                     setExistingImagePath(null);
                   }}
-                  className="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center"
-                  style={{ background: "rgba(16,29,48,0.7)", color: "#fff" }}
+                  className="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center bg-navy/70 text-white"
                   title="Remove image"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -609,15 +464,11 @@ export default function BlogForm() {
               </div>
             ) : (
               <label
-                className="flex flex-col items-center justify-center gap-1.5 w-full rounded-lg cursor-pointer"
-                style={{
-                  background: "#f8f9fb",
-                  border: "1px dashed #d5d9e0",
-                  aspectRatio: FEATURED_IMAGE_ASPECT_CSS,
-                }}
+                className="flex flex-col items-center justify-center gap-1.5 w-full rounded-lg cursor-pointer bg-surface-muted border border-dashed border-line-strong"
+                style={{ aspectRatio: FEATURED_IMAGE_ASPECT_CSS }}
               >
-                <ImagePlus className="h-5 w-5" style={{ color: "#9aa3b2" }} />
-                <span className="text-xs" style={{ color: "#9aa3b2" }}>
+                <ImagePlus className="h-5 w-5 text-ink-faint" />
+                <span className="text-xs text-ink-faint">
                   Upload image
                 </span>
                 <input
@@ -629,30 +480,27 @@ export default function BlogForm() {
               </label>
             )}
             <p
-              className="text-[11px] flex items-start gap-1"
-              style={{ color: "#c2c7d1" }}
+              className="text-[11px] flex items-start gap-1 text-ink-ghost"
             >
-              <CropIcon className="h-3 w-3 mt-0.5 flex-shrink-0" />
+              <CropIcon className="h-3 w-3 mt-0.5 shrink-0" />
               Cropped to a fixed {FEATURED_IMAGE_RATIO_LABEL} frame — you can
               reposition and zoom, not stretch it.
             </p>
           </div>
 
-          <div className="rounded-2xl p-6 md:p-8 space-y-5" style={cardStyle}>
+          <div className="rounded-2xl p-6 md:p-8 space-y-5 bg-white border border-line shadow-card">
             <h2
-              className="text-[13px] font-semibold uppercase tracking-wider"
-              style={{ color: "#8993a6" }}
+              className="text-[13px] font-semibold uppercase tracking-wider text-ink-subtle"
             >
               Details
             </h2>
 
             <div className="grid gap-4 xl:grid-cols-2">
               <div className="space-y-1.5">
-                <Label className={labelClass} style={labelStyle}>
+                <Label className={labelClass}>
                   Category{" "}
                   <span
-                    className="normal-case tracking-normal text-[11px]"
-                    style={{ color: "#b4bac6" }}
+                    className="normal-case tracking-normal text-[11px] text-ink-faint"
                   >
                     (optional)
                   </span>
@@ -661,15 +509,11 @@ export default function BlogForm() {
                   <select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
-                    className="w-full h-12 rounded-lg text-[14px] px-3.5 pr-9 outline-none cursor-pointer"
-                    style={{
-                      ...inputStyle,
-                      color: categoryId ? "#101d30" : "#9aa3b2",
-                    }}
+                    className={cn("w-full h-12 rounded-lg text-[14px] px-3.5 pr-9 outline-hidden cursor-pointer bg-white border border-line", categoryId ? "text-navy" : "text-ink-faint")}
                   >
                     <option value="">No category</option>
                     {categories.map((c) => (
-                      <option key={c.id} value={c.id} style={{ color: "#101d30" }}>
+                      <option key={c.id} value={c.id} className="text-navy">
                         {c.name}
                       </option>
                     ))}
@@ -678,8 +522,7 @@ export default function BlogForm() {
                     <button
                       type="button"
                       onClick={() => setCategoryId("")}
-                      className="absolute right-8 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full flex items-center justify-center hover:opacity-70"
-                      style={{ background: "#f2f3f6", color: "#8993a6" }}
+                      className="absolute right-8 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full flex items-center justify-center hover:opacity-70 bg-fill text-ink-subtle"
                       title="Clear category"
                     >
                       <X className="h-3 w-3" />
@@ -692,39 +535,33 @@ export default function BlogForm() {
                   datetime-local widget, which can render in 24-hour
                   format depending on browser/OS locale. */}
               <div className="space-y-1.5">
-                <Label className={labelClass} style={labelStyle}>
+                <Label className={labelClass}>
                   Published at
                 </Label>
                 <div
-                  className="flex flex-wrap items-center gap-2.5 rounded-lg px-3.5 py-2 min-h-12"
-                  style={inputStyle}
+                  className="flex flex-wrap items-center gap-2.5 rounded-lg px-3.5 py-2 min-h-12 bg-white border border-line text-navy"
                 >
                   <Calendar
-                    className="h-4 w-4 flex-shrink-0"
-                    style={{ color: "#9aa3b2" }}
+                    className="h-4 w-4 shrink-0 text-ink-faint"
                   />
                   <input
                     type="date"
                     value={publishedDate}
                     onChange={(e) => setPublishedDate(e.target.value)}
-                    className="bg-transparent text-[14px] outline-none"
-                    style={{ color: "#101d30" }}
+                    className="bg-transparent text-[14px] outline-hidden text-navy"
                   />
 
                   <span
-                    className="h-5 w-px flex-shrink-0"
-                    style={{ background: "#e2e5eb" }}
+                    className="h-5 w-px shrink-0 bg-line"
                   />
 
                   <Clock
-                    className="h-4 w-4 flex-shrink-0"
-                    style={{ color: "#9aa3b2" }}
+                    className="h-4 w-4 shrink-0 text-ink-faint"
                   />
                   <select
                     value={publishedHour12}
                     onChange={(e) => setPublishedHour12(Number(e.target.value))}
-                    className="bg-transparent text-[14px] outline-none cursor-pointer"
-                    style={{ color: "#101d30" }}
+                    className="bg-transparent text-[14px] outline-hidden cursor-pointer text-navy"
                   >
                     {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
                       <option key={h} value={h}>
@@ -732,12 +569,11 @@ export default function BlogForm() {
                       </option>
                     ))}
                   </select>
-                  <span style={{ color: "#9aa3b2" }}>:</span>
+                  <span className="text-ink-faint">:</span>
                   <select
                     value={publishedMinute}
                     onChange={(e) => setPublishedMinute(Number(e.target.value))}
-                    className="bg-transparent text-[14px] outline-none cursor-pointer"
-                    style={{ color: "#101d30" }}
+                    className="bg-transparent text-[14px] outline-hidden cursor-pointer text-navy"
                   >
                     {[0, 15, 30, 45].map((m) => (
                       <option key={m} value={m}>
@@ -747,20 +583,14 @@ export default function BlogForm() {
                   </select>
 
                   <div
-                    className="flex rounded-md overflow-hidden ml-auto flex-shrink-0"
-                    style={{ border: "1px solid #e2e5eb" }}
+                    className="flex rounded-md overflow-hidden ml-auto shrink-0 border border-line"
                   >
                     {(["AM", "PM"] as const).map((p) => (
                       <button
                         key={p}
                         type="button"
                         onClick={() => setPublishedAmPm(p)}
-                        className="px-2.5 py-1 text-[12px] font-semibold transition-colors"
-                        style={
-                          publishedAmPm === p
-                            ? { background: "#E4CE8F", color: "#101d30" }
-                            : { background: "#ffffff", color: "#9aa3b2" }
-                        }
+                        className={cn("px-2.5 py-1 text-[12px] font-semibold transition-colors", publishedAmPm === p ? "bg-gold-light text-navy" : "bg-white text-ink-faint")}
                       >
                         {p}
                       </button>
@@ -772,18 +602,16 @@ export default function BlogForm() {
 
             {/* Featured toggle — separated as its own row */}
             <div
-              className="flex items-center justify-between gap-4 pt-4"
-              style={{ borderTop: "1px solid #edeff3" }}
+              className="flex items-center justify-between gap-4 pt-4 border-t border-line-soft"
             >
               <div>
                 <p
-                  className="flex items-center gap-2 text-sm font-medium"
-                  style={{ color: "#101d30" }}
+                  className="flex items-center gap-2 text-sm font-medium text-navy"
                 >
-                  <Star className="h-3.5 w-3.5" style={{ color: "#c9a227" }} />
+                  <Star className="h-3.5 w-3.5 text-gold" />
                   Featured article
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: "#9aa3b2" }}>
+                <p className="text-xs mt-0.5 text-ink-faint">
                   Highlight this article on the blog page.
                 </p>
               </div>
@@ -792,12 +620,10 @@ export default function BlogForm() {
                 role="switch"
                 aria-checked={isFeatured}
                 onClick={() => setIsFeatured(!isFeatured)}
-                className="h-5 w-9 rounded-full relative transition-colors flex-shrink-0"
-                style={{ background: isFeatured ? "#E4CE8F" : "#e2e5eb" }}
+                className={cn("h-5 w-9 rounded-full relative transition-colors shrink-0", isFeatured ? "bg-gold-light" : "bg-line")}
               >
                 <span
-                  className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
-                  style={{ left: isFeatured ? 18 : 2 }}
+                  className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all", isFeatured ? "left-4.5" : "left-0.5")}
                 />
               </button>
             </div>
@@ -808,33 +634,26 @@ export default function BlogForm() {
       {/* Crop modal — featured image only, fixed ratio */}
       {cropModalOpen && rawImageSrc && (
         <div
-          className="fixed inset-0 flex items-center justify-center px-4"
-          style={{ background: "rgba(16,29,48,0.6)", zIndex: 100000 }}
+          className="fixed inset-0 flex items-center justify-center px-4 bg-navy/60 z-[100000]"
         >
           <div
-            className="w-full max-w-md rounded-2xl overflow-hidden"
-            style={{
-              background: "#ffffff",
-              boxShadow: "0 24px 60px -16px rgba(16,29,48,0.4)",
-            }}
+            className="w-full max-w-md rounded-2xl overflow-hidden bg-white shadow-modal"
           >
             <div className="px-6 pt-6 pb-4">
               <h3
-                className="text-[16px] font-semibold flex items-center gap-2"
-                style={{ color: "#101d30" }}
+                className="text-[16px] font-semibold flex items-center gap-2 text-navy"
               >
-                <CropIcon className="h-4 w-4" style={{ color: "#c9a227" }} />
+                <CropIcon className="h-4 w-4 text-gold" />
                 Crop featured image
               </h3>
-              <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
+              <p className="text-sm mt-1 text-ink-muted">
                 Drag to reposition, use the slider to zoom. The frame is locked
                 at {FEATURED_IMAGE_RATIO_LABEL}.
               </p>
             </div>
 
             <div
-              className="relative w-full"
-              style={{ height: 380, background: "#101d30" }}
+              className="relative w-full h-[380px] bg-navy"
             >
               <Cropper
                 image={rawImageSrc}
@@ -852,8 +671,7 @@ export default function BlogForm() {
 
             <div className="px-6 py-4 flex items-center gap-3">
               <ZoomIn
-                className="h-4 w-4 flex-shrink-0"
-                style={{ color: "#9aa3b2" }}
+                className="h-4 w-4 shrink-0 text-ink-faint"
               />
               <input
                 type="range"
@@ -870,77 +688,17 @@ export default function BlogForm() {
               <button
                 onClick={closeCropModal}
                 disabled={cropping}
-                className="flex-1 h-10 rounded-lg text-sm font-medium disabled:opacity-50"
-                style={{ background: "#f2f3f6", color: "#101d30" }}
+                className="flex-1 h-10 rounded-lg text-sm font-medium disabled:opacity-50 bg-fill text-navy"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmCrop}
                 disabled={cropping || !croppedAreaPixels}
-                className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60"
-                style={{ background: "#E4CE8F", color: "#101d30" }}
+                className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60 bg-gold-light text-navy"
               >
                 {cropping ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {cropping ? "Applying..." : "Apply crop"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete confirmation modal */}
-      {showDeleteModal && (
-        <div
-          className="fixed inset-0 flex items-center justify-center px-4"
-          style={{ background: "rgba(16,29,48,0.45)", zIndex: 100000 }}
-          onClick={() => !deleting && setShowDeleteModal(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl p-6"
-            style={{
-              background: "#ffffff",
-              boxShadow: "0 24px 60px -16px rgba(16,29,48,0.35)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="h-10 w-10 rounded-full flex items-center justify-center mb-3"
-              style={{ background: "#fbeceb" }}
-            >
-              <AlertTriangle className="h-5 w-5" style={{ color: "#c25b4a" }} />
-            </div>
-            <h3
-              className="text-[16px] font-semibold"
-              style={{ color: "#101d30" }}
-            >
-              Delete blog?
-            </h3>
-            <p className="text-sm mt-1.5" style={{ color: "#6b7688" }}>
-              This will permanently remove{" "}
-              <span style={{ color: "#101d30", fontWeight: 500 }}>
-                "{title || "this blog"}"
-              </span>
-              . This can't be undone.
-            </p>
-
-            <div className="flex items-center gap-2 mt-6">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={deleting}
-                className="flex-1 h-10 rounded-lg text-sm font-medium disabled:opacity-50"
-                style={{ background: "#f2f3f6", color: "#101d30" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-70"
-                style={{ background: "#c25b4a", color: "#ffffff" }}
-              >
-                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {deleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

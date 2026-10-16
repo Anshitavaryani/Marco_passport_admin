@@ -1,9 +1,10 @@
 /** @format */
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { ArrowLeft, Pencil, Star, Loader2, Newspaper, Tag, Calendar, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { GetBlogByIdAPI } from "@/services/Api/BlogApi";
+import { cn } from "@/lib/utils";
 import "./article-content.css";
 
 const IMAGE_BASE_URL = import.meta.env.VITE_IMAGE_BASE_URL || "https://api.themarcopassport.com";
@@ -13,12 +14,6 @@ const IMAGE_BASE_URL = import.meta.env.VITE_IMAGE_BASE_URL || "https://api.thema
 const FEATURED_IMAGE_RATIO_W = 16;
 const FEATURED_IMAGE_RATIO_H = 9;
 const FEATURED_IMAGE_ASPECT_CSS = `${FEATURED_IMAGE_RATIO_W}/${FEATURED_IMAGE_RATIO_H}`;
-
-const cardStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e5eb",
-  boxShadow: "0 1px 3px rgba(16,29,48,0.06)",
-};
 
 interface BlogDetail {
   id: number;
@@ -52,16 +47,15 @@ function DetailRow({
   return (
     <div className="flex items-center gap-3">
       <div
-        className="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ background: "#f2f3f6" }}
+        className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 bg-fill"
       >
-        <Icon className="h-4 w-4" style={{ color: "#8993a6" }} />
+        <Icon className="h-4 w-4 text-ink-subtle" />
       </div>
       <div className="min-w-0">
-        <p className="text-[10.5px] tracking-wider uppercase" style={{ color: "#9aa3b2" }}>
+        <p className="text-[10.5px] tracking-wider uppercase text-ink-faint">
           {label}
         </p>
-        <div className="text-sm mt-0.5" style={{ color: "#101d30" }}>
+        <div className="text-sm mt-0.5 text-navy">
           {children}
         </div>
       </div>
@@ -102,14 +96,14 @@ export default function BlogView() {
   if (loading) {
     return (
       <div className="w-full px-6 py-16 flex justify-center">
-        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#9aa3b2" }} />
+        <Loader2 className="h-5 w-5 animate-spin text-ink-faint" />
       </div>
     );
   }
 
   if (!blog) {
     return (
-      <div className="w-full px-6 py-16 text-center text-sm" style={{ color: "#9aa3b2" }}>
+      <div className="w-full px-6 py-16 text-center text-sm text-ink-faint">
         Blog not found.
       </div>
     );
@@ -121,45 +115,37 @@ export default function BlogView() {
         <div className="min-w-0">
           <button
             onClick={() => navigate("/blogs")}
-            className="flex items-center gap-1.5 text-sm mb-3 hover:opacity-70 transition-opacity"
-            style={{ color: "#6b7688" }}
+            className="flex items-center gap-1.5 text-sm mb-3 hover:opacity-70 transition-opacity text-ink-muted"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to blogs
           </button>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-[22px] font-semibold" style={{ color: "#101d30" }}>
+            <h1 className="text-[22px] font-semibold text-navy">
               {blog.title}
             </h1>
             <span
-              className="px-2.5 py-1 rounded-full text-[11px] font-medium"
-              style={
-                blog.is_active
-                  ? { background: "#fbf3de", color: "#a3874f" }
-                  : { background: "#f1f2f5", color: "#8993a6" }
-              }
+              className={cn("px-2.5 py-1 rounded-full text-[11px] font-medium", blog.is_active ? "bg-gold-soft text-gold-dark" : "bg-fill text-ink-subtle")}
             >
               {blog.is_active ? "Active" : "Inactive"}
             </span>
             {blog.is_featured && (
               <span
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
-                style={{ background: "#fbf3de", color: "#a3874f" }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-gold-soft text-gold-dark"
               >
                 <Star className="h-3 w-3" />
                 Featured
               </span>
             )}
           </div>
-          <p className="text-sm mt-1.5 max-w-2xl" style={{ color: "#6b7688" }}>
+          <p className="text-sm mt-1.5 max-w-2xl text-ink-muted">
             {blog.description}
           </p>
         </div>
 
         <button
           onClick={() => navigate(`/blogs/${blog.id}/edit`)}
-          className="h-10 px-4 rounded-lg font-semibold text-sm tracking-wide flex items-center gap-2 flex-shrink-0"
-          style={{ background: "#E4CE8F", color: "#101d30" }}
+          className="h-10 px-4 rounded-lg font-semibold text-sm tracking-wide flex items-center gap-2 shrink-0 bg-gold-light text-navy"
         >
           <Pencil className="h-4 w-4" />
           Edit blog
@@ -168,7 +154,7 @@ export default function BlogView() {
 
       <div className="grid gap-5 lg:grid-cols-3 items-start">
         <div className="lg:col-span-2 space-y-5">
-          <div className="rounded-2xl overflow-hidden" style={{ ...cardStyle, aspectRatio: FEATURED_IMAGE_ASPECT_CSS }}>
+          <div className="rounded-2xl overflow-hidden bg-white border border-line shadow-card" style={{ aspectRatio: FEATURED_IMAGE_ASPECT_CSS }}>
             {blog.featured_image ? (
               <img
                 src={`${IMAGE_BASE_URL}${blog.featured_image}`}
@@ -176,14 +162,14 @@ export default function BlogView() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center" style={{ background: "#f2f3f6" }}>
-                <Newspaper className="h-8 w-8" style={{ color: "#c2c7d1" }} />
+              <div className="w-full h-full flex items-center justify-center bg-fill">
+                <Newspaper className="h-8 w-8 text-ink-ghost" />
               </div>
             )}
           </div>
 
-          <div className="rounded-2xl p-6" style={cardStyle}>
-            <h2 className="text-[13px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#8993a6" }}>
+          <div className="rounded-2xl p-6 bg-white border border-line shadow-card">
+            <h2 className="text-[13px] font-semibold uppercase tracking-wider mb-3 text-ink-subtle">
               Article
             </h2>
             {/* article-body, not Tailwind's prose classes — see article-content.css */}
@@ -192,21 +178,20 @@ export default function BlogView() {
         </div>
 
         {/* Single details card — sticks alongside the article on large screens */}
-        <div className="rounded-2xl p-5 space-y-4 lg:sticky lg:top-6" style={cardStyle}>
-          <h2 className="text-[13px] font-semibold uppercase tracking-wider" style={{ color: "#8993a6" }}>
+        <div className="rounded-2xl p-5 space-y-4 lg:sticky lg:top-6 bg-white border border-line shadow-card">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-ink-subtle">
             Details
           </h2>
 
           <DetailRow icon={Tag} label="Category">
             {blog.blog_category?.name ? (
               <span
-                className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
-                style={{ background: "#f2f3f6", color: "#101d30" }}
+                className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-fill text-navy"
               >
                 {blog.blog_category.name}
               </span>
             ) : (
-              <span style={{ color: "#b4bac6" }}>Uncategorized</span>
+              <span className="text-ink-faint">Uncategorized</span>
             )}
           </DetailRow>
 

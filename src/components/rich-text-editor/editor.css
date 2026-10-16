@@ -1,0 +1,190 @@
+/*
+ * The editing area: a WYSIWYG preview of the article. Keep in sync with
+ * pages/Blog/article-content.css and the live site's article stylesheet.
+ *
+ * Tailwind's reset strips default heading sizes, list bullets, link styles
+ * and so on, so those are restored here.
+ */
+
+.rich-text-editor .rte-content {
+  min-height: 100%;
+  padding: 24px 28px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-navy);
+  outline: none;
+  overflow-wrap: break-word;
+}
+
+.rte-content > :first-child {
+  margin-top: 0;
+}
+
+.rte-content p,
+.rte-content div:not(.rte-media):not(.insider-tip),
+.rte-content pre,
+.rte-content ul,
+.rte-content ol,
+.rte-content table {
+  margin: 1em 0;
+}
+
+.rte-content h1,
+.rte-content h2,
+.rte-content h3,
+.rte-content h4,
+.rte-content h5,
+.rte-content h6 {
+  font-weight: bold;
+  line-height: 1.3;
+}
+.rte-content h1 { font-size: 2em; margin: 0.67em 0; }
+.rte-content h2 { font-size: 1.5em; margin: 0.83em 0; }
+.rte-content h3 { font-size: 1.17em; margin: 1em 0; }
+.rte-content h4 { font-size: 1em; margin: 1.33em 0; }
+.rte-content h5 { font-size: 0.83em; margin: 1.67em 0; }
+.rte-content h6 { font-size: 0.67em; margin: 2.33em 0; }
+
+.rte-content ul,
+.rte-content ol {
+  padding-left: 40px;
+}
+.rte-content ul { list-style-type: disc; }
+.rte-content ul ul { list-style-type: circle; }
+.rte-content ul ul ul { list-style-type: square; }
+.rte-content ol { list-style-type: decimal; }
+/* Tiptap puts list-item text in a <p>; show it like TinyMCE's bare <li>. */
+.rte-content li > p { margin: 0; }
+.rte-content li > ul,
+.rte-content li > ol { margin: 0; }
+
+.rte-content a {
+  color: var(--color-gold-dark);
+  text-decoration: underline;
+}
+
+.rte-content code {
+  background-color: var(--color-fill);
+  border-radius: 3px;
+  padding: 0.1rem 0.2rem;
+}
+.rte-content pre {
+  white-space: pre-wrap;
+}
+
+.rte-content hr {
+  margin: 1em 0;
+  border: 0;
+  border-top: 1px solid var(--color-line-strong);
+}
+
+.rte-content table {
+  border-collapse: collapse;
+}
+.rte-content th,
+.rte-content td {
+  padding: 0.4rem;
+  border: 1px solid var(--color-line-strong);
+  vertical-align: top;
+}
+.rte-content th { font-weight: bold; }
+.rte-content td > p,
+.rte-content th > p { margin: 0; }
+.rte-content .selectedCell {
+  background-color: var(--color-gold-soft);
+}
+
+/* Drop cap on the first paragraph */
+.rte-content > p:first-of-type::first-letter {
+  float: left;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 64px;
+  line-height: 0.85;
+  font-weight: 600;
+  padding: 4px 8px 0 0;
+  color: var(--color-navy);
+}
+
+/* Insider Tip callout */
+.rte-content .insider-tip {
+  background: var(--color-parchment);
+  border-left: 3px solid var(--color-gold-light);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 16px 0;
+}
+.rte-content .insider-tip::before {
+  content: "Insider tip";
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-gold-dark);
+  margin-bottom: 4px;
+}
+.rte-content .insider-tip > :first-child { margin-top: 0; }
+.rte-content .insider-tip > :last-child { margin-bottom: 0; }
+
+/* Pull Quote, and the plain blockquote */
+.rte-content blockquote.pull-quote {
+  border-left: 3px solid var(--color-navy);
+  padding-left: 16px;
+  margin: 20px 0;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--color-navy);
+}
+.rte-content blockquote:not(.pull-quote) {
+  border-left: 3px solid var(--color-line-strong);
+  padding-left: 16px;
+  margin: 16px 0;
+  color: var(--color-ink-muted);
+}
+.rte-content blockquote > p { margin: 0.5em 0; }
+
+/* Images render at the site's fixed ratio */
+.rte-content img {
+  display: inline-block;
+  width: 100%;
+  aspect-ratio: var(--rte-image-aspect, 16 / 9);
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+.rte-content figure.image { margin: 16px 0; }
+.rte-content figure.image img { margin: 0; }
+.rte-content figure.image figcaption {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-faint);
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* Embedded media: inert in the editor, click to select */
+.rte-content .rte-media {
+  display: inline-block;
+  max-width: 100%;
+}
+.rte-content .rte-media > * {
+  display: block;
+  max-width: 100%;
+  pointer-events: none;
+}
+
+.rte-content img.ProseMirror-selectednode,
+.rte-content .ProseMirror-selectednode {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* Find and replace */
+.rte-content .rte-search-match {
+  background-color: color-mix(in srgb, var(--color-gold-light) 45%, transparent);
+}
+.rte-content .rte-search-current {
+  background-color: var(--color-gold-light);
+}

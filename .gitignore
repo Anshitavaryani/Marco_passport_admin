@@ -11,3 +11,6 @@ dist/
 
 # Mac system files
 .DS_Store
+
+# TypeScript build cache
+*.tsbuildinfo

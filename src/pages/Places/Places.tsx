@@ -1,6 +1,6 @@
 /** @format */
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Eye, Pencil, Trash2, MapPin, Loader2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -19,12 +19,6 @@ interface Place {
 }
 
 const LIMIT = 15;
-
-const inputStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e5eb",
-  color: "#101d30",
-};
 
 export default function Places() {
   const navigate = useNavigate();
@@ -73,7 +67,7 @@ export default function Places() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const handleDelete = async (id: number, name: string) => {
+  const handleDelete = async (id: number) => {
     try {
       setDeletingId(id);
       const res = await DeletePlaceAPI(id, token);
@@ -97,23 +91,21 @@ export default function Places() {
 
   return (
     <div className="w-full px-6 py-6 md:px-8 md:py-8">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital@1&display=swap');`}</style>
 
       <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
         <div>
-          <h1 className="flex items-center gap-2 text-[20px] font-semibold" style={{ color: "#101d30" }}>
-            <MapPin className="h-5 w-5" style={{ color: "#c9a227" }} />
+          <h1 className="flex items-center gap-2 text-[20px] font-semibold text-navy">
+            <MapPin className="h-5 w-5 text-gold" />
             Places
           </h1>
-          <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
+          <p className="text-sm mt-1 text-ink-muted">
             Manage the places listed across the Marco Passport.
           </p>
         </div>
 
         <button
           onClick={() => navigate("/places/add")}
-          className="h-10 px-4 rounded-lg font-semibold text-sm tracking-wide flex items-center gap-2 flex-shrink-0"
-          style={{ background: "#E4CE8F", color: "#101d30" }}
+          className="h-10 px-4 rounded-lg font-semibold text-sm tracking-wide flex items-center gap-2 shrink-0 bg-gold-light text-navy"
         >
           <Plus className="h-4 w-4" />
           Add place
@@ -121,22 +113,16 @@ export default function Places() {
       </div>
 
       <div
-        className="rounded-2xl overflow-hidden"
-        style={{
-          background: "#ffffff",
-          border: "1px solid #e2e5eb",
-          boxShadow: "0 1px 3px rgba(16,29,48,0.06)",
-        }}
+        className="rounded-2xl overflow-hidden bg-white border border-line shadow-card"
       >
-        <div className="px-5 py-4" style={{ borderBottom: "1px solid #edeff3" }}>
+        <div className="px-5 py-4 border-b border-line-soft">
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#9aa3b2" }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint" />
             <Input
               placeholder="Search places..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="h-9 rounded-lg pl-9 text-[13.5px]"
-              style={inputStyle}
             />
           </div>
         </div>
@@ -144,12 +130,11 @@ export default function Places() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ background: "#f8f9fb", borderBottom: "1px solid #edeff3" }}>
+              <tr className="bg-surface-muted border-b border-line-soft">
                 {["", "Name", "Category", "Address", ""].map((h, i) => (
                   <th
                     key={i}
-                    className="text-left px-5 py-3 text-[10.5px] font-semibold uppercase tracking-wider"
-                    style={{ color: "#8993a6" }}
+                    className="text-left px-5 py-3 text-[10.5px] font-semibold uppercase tracking-wider text-ink-subtle"
                   >
                     {h}
                   </th>
@@ -160,25 +145,24 @@ export default function Places() {
               {loading ? (
                 <tr>
                   <td colSpan={5} className="px-5 py-14 text-center">
-                    <Loader2 className="h-5 w-5 animate-spin mx-auto" style={{ color: "#9aa3b2" }} />
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-ink-faint" />
                   </td>
                 </tr>
               ) : places.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-14 text-center text-sm" style={{ color: "#9aa3b2" }}>
+                  <td colSpan={5} className="px-5 py-14 text-center text-sm text-ink-faint">
                     No places found.
                   </td>
                 </tr>
               ) : (
-                places.map((place, idx) => (
+                places.map((place) => (
                   <tr
                     key={place.id}
-                    style={{ background: idx % 2 === 1 ? "#fafbfc" : "#ffffff" }}
+                    className="bg-white even:bg-surface-subtle"
                   >
                     <td className="px-5 py-3">
                       <div
-                        className="h-9 w-9 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0"
-                        style={{ background: "#f2f3f6", border: "1px solid #e8eaef" }}
+                        className="h-9 w-9 rounded-lg overflow-hidden flex items-center justify-center shrink-0 bg-fill border border-line"
                       >
                         {place.featured_image ? (
                           <img
@@ -187,37 +171,31 @@ export default function Places() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <MapPin className="h-4 w-4" style={{ color: "#c2c7d1" }} />
+                          <MapPin className="h-4 w-4 text-ink-ghost" />
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3 font-medium" style={{ color: "#101d30" }}>
+                    <td className="px-5 py-3 font-medium text-navy">
                       {place.name}
                     </td>
-                    <td className="px-5 py-3" style={{ color: "#6b7688" }}>
+                    <td className="px-5 py-3 text-ink-muted">
                       {place.categories?.[0]?.name || "—"}
                     </td>
-                    <td className="px-5 py-3 max-w-[240px] truncate" style={{ color: "#6b7688" }}>
+                    <td className="px-5 py-3 max-w-[240px] truncate text-ink-muted">
                       {place.address || "—"}
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => navigate(`/places/${place.id}`)}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors"
-                          style={{ color: "#8993a6" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "#f2f3f6")}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors text-ink-subtle hover:bg-fill"
                           title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => navigate(`/places/${place.id}/edit`)}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors"
-                          style={{ color: "#8993a6" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "#f2f3f6")}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors text-ink-subtle hover:bg-fill"
                           title="Edit"
                         >
                           <Pencil className="h-4 w-4" />
@@ -225,10 +203,7 @@ export default function Places() {
                         <button
                           onClick={() => setDeleteTarget({ id: place.id, name: place.name })}
                           disabled={deletingId === place.id}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors disabled:opacity-50"
-                          style={{ color: "#c25b4a" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "#fbeceb")}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors disabled:opacity-50 text-danger hover:bg-danger-soft"
                           title="Delete"
                         >
                           {deletingId === place.id ? (
@@ -248,29 +223,26 @@ export default function Places() {
 
         {!loading && count > 0 && (
           <div
-            className="flex items-center justify-between px-5 py-3"
-            style={{ borderTop: "1px solid #edeff3" }}
+            className="flex items-center justify-between px-5 py-3 border-t border-line-soft"
           >
-            <p className="text-xs" style={{ color: "#9aa3b2" }}>
+            <p className="text-xs text-ink-faint">
               Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, count)} of {count}
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-40"
-                style={{ color: "#6b7688", border: "1px solid #e2e5eb" }}
+                className="h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-40 text-ink-muted border border-line"
               >
                 Previous
               </button>
-              <span className="text-xs" style={{ color: "#9aa3b2" }}>
+              <span className="text-xs text-ink-faint">
                 Page {page} of {totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-40"
-                style={{ color: "#6b7688", border: "1px solid #e2e5eb" }}
+                className="h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-40 text-ink-muted border border-line"
               >
                 Next
               </button>
@@ -282,43 +254,38 @@ export default function Places() {
       {/* Delete confirmation modal */}
       {deleteTarget && (
         <div
-          className="fixed inset-0 flex items-center justify-center px-4"
-          style={{ background: "rgba(16,29,48,0.45)", zIndex: 100000 }}
+          className="fixed inset-0 flex items-center justify-center px-4 bg-navy/45 z-[100000]"
           onClick={() => deletingId === null && setDeleteTarget(null)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl p-6"
-            style={{ background: "#ffffff", boxShadow: "0 24px 60px -16px rgba(16,29,48,0.35)" }}
+            className="w-full max-w-sm rounded-2xl p-6 bg-white shadow-modal"
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="h-10 w-10 rounded-full flex items-center justify-center mb-3"
-              style={{ background: "#fbeceb" }}
+              className="h-10 w-10 rounded-full flex items-center justify-center mb-3 bg-danger-soft"
             >
-              <AlertTriangle className="h-5 w-5" style={{ color: "#c25b4a" }} />
+              <AlertTriangle className="h-5 w-5 text-danger" />
             </div>
-            <h3 className="text-[16px] font-semibold" style={{ color: "#101d30" }}>
+            <h3 className="text-[16px] font-semibold text-navy">
               Delete place?
             </h3>
-            <p className="text-sm mt-1.5" style={{ color: "#6b7688" }}>
+            <p className="text-sm mt-1.5 text-ink-muted">
               This will permanently remove{" "}
-              <span style={{ color: "#101d30", fontWeight: 500 }}>"{deleteTarget.name}"</span>. This can't be undone.
+              <span className="text-navy font-medium">"{deleteTarget.name}"</span>. This can't be undone.
             </p>
 
             <div className="flex items-center gap-2 mt-6">
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deletingId !== null}
-                className="flex-1 h-10 rounded-lg text-sm font-medium disabled:opacity-50"
-                style={{ background: "#f2f3f6", color: "#101d30" }}
+                className="flex-1 h-10 rounded-lg text-sm font-medium disabled:opacity-50 bg-fill text-navy"
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleDelete(deleteTarget.id, deleteTarget.name)}
+                onClick={() => handleDelete(deleteTarget.id)}
                 disabled={deletingId !== null}
-                className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-70"
-                style={{ background: "#c25b4a", color: "#ffffff" }}
+                className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-70 bg-danger text-white"
               >
                 {deletingId !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {deletingId !== null ? "Deleting..." : "Delete"}

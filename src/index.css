@@ -1,123 +1,147 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/*
+ * Marco Passport design tokens: the only place colours are defined.
+ *
+ * Each --color-* below becomes a Tailwind utility (text-navy, bg-gold-soft,
+ * border-line, ring-gold-light/40, ...). Use those in markup instead of hex
+ * values. Tailwind's default palette is switched off, so an off-brand
+ * colour like bg-blue-500 simply won't exist.
+ *
+ * `static` keeps every variable on :root, so plain stylesheets such as
+ * pages/Blog/article-content.css can use them as var(--color-*).
+ */
+@theme static {
+  --color-*: initial;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+  --color-white: #ffffff;
+  --color-black: #000000;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+  /* Navy: headings, body text and dark surfaces */
+  --color-navy: #101d30;
+  --color-navy-glow: #1c2e47;
+  --color-navy-hover: #182338;
+  --color-navy-raised: #16233a;
+  --color-navy-deep: #0e1a2b;
+  --color-navy-inset: #0c1626;
+  --color-navy-abyss: #0a1420;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+  /* Text on light surfaces, strongest to faintest */
+  --color-prose: #334155; /* rich-text body, matches the live site's articles */
+  --color-ink-muted: #6b7688;
+  --color-ink-subtle: #8993a6;
+  --color-ink-faint: #9aa3b2;
+  --color-ink-ghost: #c2c7d1;
 
-    --primary: 356 69% 48%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 356 69% 42%;
-    
-    --admin-red: 356 69% 48%;
-    --admin-red-hover: 356 69% 42%;
-    --admin-bg: 0 0% 98%;
-    --admin-card: 0 0% 100%;
-    --admin-shadow: 0 0% 0% / 0.1;
-    
-    --success: 142 76% 36%;
-    --success-foreground: 355 20% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 0%;
-    --info: 199 89% 48%;
-    --info-foreground: 0 0% 100%;
+  /* Text on dark surfaces, strongest to faintest */
+  --color-cream: #f3eee3;
+  --color-mist: #93a1b5;
+  --color-dusk: #5c6b81;
+  --color-dusk-deep: #3f4b60;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+  /* Light surfaces and lines */
+  --color-surface-muted: #f8f9fb;
+  --color-surface-subtle: #fafbfc;
+  --color-fill: #f2f3f6;
+  --color-line: #e2e5eb;
+  --color-line-soft: #edeff3;
+  --color-line-strong: #d5d9e0;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+  /* Gold: accents and the primary action */
+  --color-gold: #c9a227;
+  --color-gold-light: #e4ce8f;
+  --color-gold-muted: #d2b876;
+  --color-gold-dark: #a3874f;
+  --color-gold-deep: #7a6538;
+  --color-gold-soft: #fbf3de;
+  --color-parchment: #faf6ec;
+  --color-parchment-deep: #efe4c8;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+  /* Status */
+  --color-danger: #c25b4a;
+  --color-danger-soft: #fbeceb;
+  --color-success: #3f9d5c;
+  --color-success-soft: #e7f5ea;
+  --color-info: #5b6bcf;
+  --color-info-soft: #eef1fb;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+  /* Semantic names used by the shadcn/ui components, mapped onto the palette */
+  --color-background: var(--color-white);
+  --color-foreground: var(--color-navy);
+  --color-popover: var(--color-white);
+  --color-popover-foreground: var(--color-navy);
+  --color-primary: var(--color-gold-light);
+  --color-primary-foreground: var(--color-navy);
+  --color-secondary: var(--color-fill);
+  --color-muted: var(--color-fill);
+  --color-muted-foreground: var(--color-ink-muted);
+  --color-accent: var(--color-fill);
+  --color-accent-foreground: var(--color-navy);
+  --color-destructive: var(--color-danger);
+  --color-destructive-foreground: var(--color-white);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-gold);
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+  --color-sidebar: var(--color-navy);
+  --color-sidebar-foreground: var(--color-mist);
+  --color-sidebar-accent: var(--color-navy-hover);
+  --color-sidebar-accent-foreground: var(--color-cream);
+  --color-sidebar-border: color-mix(in srgb, var(--color-gold-light) 12%, transparent);
+  --color-sidebar-ring: var(--color-gold);
 
-    --radius: 0.5rem;
+  --font-display: "Fraunces", serif;
 
-    --sidebar-background: 0 0% 98%;
+  /* Fixed line heights, as in Tailwind v3. v4's defaults are ratios, which
+     change how arbitrary sizes like text-[11px] inherit line height. */
+  --text-xs--line-height: 1rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+  --shadow-card: 0 1px 3px color-mix(in srgb, var(--color-navy) 6%, transparent);
+  --shadow-modal: 0 24px 60px -16px color-mix(in srgb, var(--color-navy) 35%, transparent);
+  --shadow-panel: 0 16px 40px -16px rgb(0 0 0 / 0.4);
+  --shadow-auth: 0 30px 80px -20px rgb(0 0 0 / 0.65);
+  --shadow-badge:
+    0 10px 28px -10px rgb(0 0 0 / 0.55), 0 0 0 1px color-mix(in srgb, var(--color-gold-light) 45%, transparent);
+}
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+/* Full-page backdrop behind the login and password-reset cards */
+@utility bg-auth-backdrop {
+  background: radial-gradient(
+    ellipse 900px 600px at 80% -10%,
+    var(--color-navy-glow) 0%,
+    var(--color-navy-deep) 55%,
+    var(--color-navy-abyss) 100%
+  );
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border);
+  }
+
+  ::placeholder {
+    color: var(--color-ink-faint);
+  }
+
+  /* Tailwind v4 dropped v3's pointer cursor on buttons; keep it. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 
   body {
     @apply bg-background text-foreground;
   }
 }
-.transition-colors {
-    color: black !important;
-}
-

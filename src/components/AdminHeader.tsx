@@ -27,15 +27,15 @@ export function AdminHeader() {
     .toUpperCase();
 
   return (
-    <header className="h-16 sticky top-0 z-10 border-b bg-background/95 backdrop-blur px-6 flex items-center justify-between">
+    <header className="h-16 sticky top-0 z-10 border-b bg-background/95 backdrop-blur-sm px-6 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="rounded-md p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors" />
       </div>
 
       <DropdownMenu onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-full transition-colors hover:bg-muted/60 outline-none">
-            <div className="w-8 h-8 rounded-full bg-[#F5C518]/15 ring-1 ring-[#F5C518]/30 flex items-center justify-center text-[#B08900] text-xs font-semibold">
+          <button className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-full transition-colors hover:bg-muted/60 outline-hidden">
+            <div className="w-8 h-8 rounded-full bg-gold-soft ring-1 ring-gold-light flex items-center justify-center text-gold-dark text-xs font-semibold">
               {initials || <User className="h-4 w-4" />}
             </div>
             <span className="text-sm font-medium text-foreground">
