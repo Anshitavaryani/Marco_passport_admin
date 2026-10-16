@@ -17,6 +17,8 @@ import {
   Plus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAddressCoordinates } from "@/hooks/use-address-coordinates";
+import { AddressCoordinatesStatus } from "@/components/AddressCoordinatesStatus";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import {
   AddPlaceAPI,
@@ -143,6 +145,7 @@ export default function PlaceForm() {
   const [insiderTipInput, setInsiderTipInput] = useState("");
 
   const [address, setAddress] = useState("");
+  const mapPin = useAddressCoordinates();
   const [mapAddress, setMapAddress] = useState(""); // debounced copy of address, used only for the map embed below
   const [neighborhood, setNeighborhood] = useState("");
   const [phone, setPhone] = useState("");
@@ -227,6 +230,7 @@ export default function PlaceForm() {
               : [],
         );
         setAddress(p.address || "");
+        mapPin.load(p.address || "", p.latitude, p.longitude);
         setNeighborhood(p.neighborhood || "");
         setPhone(p.phone || "");
         setEmail(p.email || "");
@@ -499,6 +503,12 @@ export default function PlaceForm() {
       }
 
       formData.append("address", address.trim());
+      // Looked up now if the address changed since it was last located.
+      const coordinates = await mapPin.locate(address);
+      if (coordinates) {
+        formData.append("latitude", coordinates.latitude);
+        formData.append("longitude", coordinates.longitude);
+      }
       if (neighborhood.trim())
         formData.append("neighborhood", neighborhood.trim());
       if (phone.trim()) formData.append("phone", phone.trim());
@@ -546,7 +556,12 @@ export default function PlaceForm() {
         : await AddPlaceAPI(formData, token);
 
       if (res.data?.success) {
-        toast({ title: isEdit ? "Place updated" : "Place created" });
+        toast({
+          title: isEdit ? "Place updated" : "Place created",
+          description: coordinates
+            ? undefined
+            : `The address couldn't be found on the map, so ${isEdit ? "its coordinates weren't updated" : "no coordinates were saved"}.`,
+        });
         navigate("/places");
       }
     } catch (err: any) {
@@ -915,6 +930,7 @@ export default function PlaceForm() {
             <Input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
+              onBlur={(e) => mapPin.locate(e.target.value)}
               placeholder="Full street address (required)"
               required
               aria-required="true"
@@ -955,6 +971,13 @@ export default function PlaceForm() {
                 </span>
               </div>
             )}
+
+            <AddressCoordinatesStatus
+              address={address}
+              locatedAddress={mapPin.address}
+              status={mapPin.status}
+              coordinates={mapPin.coordinates}
+            />
 
             <p className="text-[11px] text-ink-ghost">
               Required. Itinerary maps pin this listing by its name and

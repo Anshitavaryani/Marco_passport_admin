@@ -18,6 +18,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAddressCoordinates } from "@/hooks/use-address-coordinates";
+import { AddressCoordinatesStatus } from "@/components/AddressCoordinatesStatus";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import {
   AddBusinessAPI,
@@ -138,6 +140,7 @@ export default function BusinessForm() {
   const [highlightInput, setHighlightInput] = useState("");
 
   const [address, setAddress] = useState("");
+  const mapPin = useAddressCoordinates();
   const [mapAddress, setMapAddress] = useState(""); // debounced copy of address, for the map embed only
   const [neighborhood, setNeighborhood] = useState("");
   const [phone, setPhone] = useState("");
@@ -224,6 +227,7 @@ export default function BusinessForm() {
         setHighlights(parseHighlights(b.highlights));
 
         setAddress(b.address || "");
+        mapPin.load(b.address || "", b.latitude, b.longitude);
         setNeighborhood(b.neighborhood || "");
         setPhone(b.phone || "");
         setEmail(b.email || "");
@@ -457,6 +461,12 @@ export default function BusinessForm() {
       }
 
       formData.append("address", address.trim());
+      // Looked up now if the address changed since it was last located.
+      const coordinates = await mapPin.locate(address);
+      if (coordinates) {
+        formData.append("latitude", coordinates.latitude);
+        formData.append("longitude", coordinates.longitude);
+      }
       if (neighborhood.trim())
         formData.append("neighborhood", neighborhood.trim());
       if (phone.trim()) formData.append("phone", phone.trim());
@@ -497,7 +507,12 @@ export default function BusinessForm() {
         : await AddBusinessAPI(formData, token);
 
       if (res.data?.success) {
-        toast({ title: isEdit ? "Business updated" : "Business created" });
+        toast({
+          title: isEdit ? "Business updated" : "Business created",
+          description: coordinates
+            ? undefined
+            : `The address couldn't be found on the map, so ${isEdit ? "its coordinates weren't updated" : "no coordinates were saved"}.`,
+        });
         navigate("/businesses");
       }
     } catch (err: any) {
@@ -804,6 +819,7 @@ export default function BusinessForm() {
             <Input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
+              onBlur={(e) => mapPin.locate(e.target.value)}
               placeholder="Full street address (required)"
               required
               aria-required="true"
@@ -840,6 +856,13 @@ export default function BusinessForm() {
                 </span>
               </div>
             )}
+
+            <AddressCoordinatesStatus
+              address={address}
+              locatedAddress={mapPin.address}
+              status={mapPin.status}
+              coordinates={mapPin.coordinates}
+            />
 
             <p className="text-[11px] text-ink-ghost">
               Required. Itinerary maps pin this listing by its name and
