@@ -1,5 +1,5 @@
 /*
- * Renders blog `content` HTML (the same raw string TinyMCE produces)
+ * Renders blog `content` HTML (the raw string the rich-text editor saves)
  * to match the live site's article styling — used by BlogView.tsx's
  * preview, and anywhere else in the admin panel that needs to render
  * a blog post's body faithfully.
@@ -14,8 +14,8 @@
  * rules) on the live frontend.
  *
  * Keep this in sync with:
- *   - the admin's TinyMCE editor preview CSS (editorContentStyle in
- *     lib/editor.ts) — same classes, same look, so what an admin sees
+ *   - the admin's editor preview CSS (components/rich-text-editor/
+ *     editor.css) — same classes, same look, so what an admin sees
  *     while writing matches what they see here and on the live site.
  *   - the live frontend's own article stylesheet.
  */
@@ -77,7 +77,7 @@
 }
 
 /* Insider Tip callout — matches the "Styles" dropdown entry admins
-   apply in TinyMCE (block: div, classes: insider-tip). */
+   apply from the editor's Formats menu (div.insider-tip). */
 .article-body .insider-tip {
   background: var(--color-parchment);
   border-left: 3px solid var(--color-gold-light);
@@ -120,7 +120,7 @@
 /* Every content image (dropped/pasted into the editor) renders at a
    consistent 16:9 ratio via object-fit: cover, regardless of the raw
    uploaded photo's original dimensions — matches the same rule in
-   lib/editor.ts's editor preview and the Featured Image's aspect-video
+   the editor preview (editor.css) and the Featured Image's aspect-video
    treatment elsewhere in this app. */
 .article-body img {
   width: 100%;

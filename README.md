@@ -34,8 +34,8 @@ Every colour is defined once, in [src/index.css](src/index.css), as a Tailwind t
 
 Don't write hex values or `style={{ color: ... }}` in components. Tailwind's default palette is switched off, so classes like `bg-blue-500` don't exist. If a new colour is needed, add it to the theme first.
 
-The TinyMCE editors render inside an iframe, so [src/lib/editor.ts](src/lib/editor.ts) reads the same tokens from `:root` at runtime.
+Plain stylesheets (the article preview and the editor's content area) use the same tokens as `var(--color-*)`.
 
-## TinyMCE
+## Rich-text editor
 
-The editors load TinyMCE from `/tinymce`. `vite.config.ts` copies it out of `node_modules/tinymce` on every dev or build run, so the version served is always the one in `package.json`. `public/tinymce/` is generated and git-ignored.
+Blog content and the Place/Business "About" fields use [src/components/rich-text-editor](src/components/rich-text-editor), built on [Tiptap](https://tiptap.dev). It reads and writes the same HTML TinyMCE used to (insider tips, pull quotes, `div` sub-headings, list styles, indents, embeds), so existing content edits cleanly and renders unchanged on the live site. Images dropped, pasted or picked in the editor upload through `uploadEditorImage` in [src/lib/editor.ts](src/lib/editor.ts).

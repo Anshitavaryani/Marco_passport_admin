@@ -4,9 +4,6 @@ node_modules/
 # Build output
 dist/
 
-# Copied from node_modules/tinymce by vite.config.ts
-public/tinymce/
-
 # Environment variables
 .env
 .env.*

@@ -9,8 +9,8 @@
  * values. Tailwind's default palette is switched off, so an off-brand
  * colour like bg-blue-500 simply won't exist.
  *
- * `static` keeps every variable on :root, so code that can't use classes
- * (the TinyMCE iframe, see lib/editor.ts) can still read them.
+ * `static` keeps every variable on :root, so plain stylesheets such as
+ * pages/Blog/article-content.css can use them as var(--color-*).
  */
 @theme static {
   --color-*: initial;

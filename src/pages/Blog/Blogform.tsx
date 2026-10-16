@@ -1,7 +1,6 @@
 /** @format */
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
-import { Editor } from "@tinymce/tinymce-react";
 import Cropper, { type Area } from "react-easy-crop";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +16,7 @@ import {
   Crop as CropIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { EDITOR_STYLE_FORMATS, editorContentStyle } from "@/lib/editor";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import {
   AddBlogAPI,
   UpdateBlogAPI,
@@ -270,29 +269,6 @@ export default function BlogForm() {
     }
   };
 
-  const handleEditorImageUpload = (blobInfo: any): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const formData = new FormData();
-      formData.append("images", blobInfo.blob(), blobInfo.filename());
-
-      fetch(`${IMAGE_BASE_URL}/api/v1/blog/upload-image`, {
-        method: "POST",
-        headers: {
-          "x-access-token": token,
-        },
-        body: formData,
-      })
-        .then((res) => res.json())
-        .then((json) => {
-          if (!json?.success || !json?.data?.url) {
-            reject(json?.message || "Image upload failed.");
-            return;
-          }
-          resolve(`${IMAGE_BASE_URL}${json.data.url}`);
-        })
-        .catch(() => reject("Image upload failed. Please try again."));
-    });
-
   const getPublishedAtDate = (): Date | null => {
     if (!publishedDate) return null;
     const [y, m, d] = publishedDate.split("-").map(Number);
@@ -440,48 +416,17 @@ export default function BlogForm() {
             <div
               className="rounded-lg overflow-hidden border border-line"
             >
-              <Editor
-                tinymceScriptSrc="/tinymce/tinymce.min.js"
-                licenseKey="gpl"
+              <RichTextEditor
                 value={content}
-                onEditorChange={(newContent) => setContent(newContent)}
-                init={{
-                  height: 640,
-                  menubar: false,
-                  plugins: [
-                    "advlist",
-                    "autolink",
-                    "lists",
-                    "link",
-                    "image",
-                    "charmap",
-                    "preview",
-                    "searchreplace",
-                    "visualblocks",
-                    "code",
-                    "fullscreen",
-                    "media",
-                    "table",
-                    "wordcount",
-                  ],
-                  toolbar:
-                    "undo redo | styles | bold italic | " +
-                    "alignleft aligncenter alignright | " +
-                    "bullist numlist outdent indent | " +
-                    "link image media | blockquote | code fullscreen",
-                  style_formats: EDITOR_STYLE_FORMATS,
-                  style_formats_merge: true,
-                  content_style: editorContentStyle(CONTENT_IMAGE_ASPECT_RATIO),
-                  images_upload_handler: handleEditorImageUpload,
-                  automatic_uploads: true,
-                  file_picker_types: "image",
-                }}
+                onChange={setContent}
+                height={640}
+                imageAspectRatio={CONTENT_IMAGE_ASPECT_RATIO}
               />
             </div>
             <p className="text-[11px] text-ink-ghost">
               Drop or paste images directly into the article — they upload
               automatically and display at a consistent 16:9 ratio to match the
-              rest of the site. Use the "Styles" dropdown for headings, Insider
+              rest of the site. Use the "Formats" menu for headings, Insider
               Tip callouts, and Pull Quotes.
             </p>
           </div>
