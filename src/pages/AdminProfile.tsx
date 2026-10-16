@@ -50,63 +50,52 @@ export default function AdminProfile() {
 
   return (
     <div className="w-full px-6 py-6 md:px-8 md:py-8">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital@1&display=swap');`}</style>
 
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1.5">
-          <span className="h-px w-5" style={{ background: "#D2B876", opacity: 0.7 }} />
-          <span className="text-[10px] tracking-[0.25em] uppercase" style={{ color: "#a3874f" }}>
+          <span className="h-px w-5 bg-gold-muted opacity-70" />
+          <span className="text-[10px] tracking-[0.25em] uppercase text-gold-dark">
             Account
           </span>
         </div>
-        <h1 className="flex items-center gap-2 text-[20px] font-semibold" style={{ color: "#101d30" }}>
-          <User className="h-5 w-5" style={{ color: "#c9a227" }} />
+        <h1 className="flex items-center gap-2 text-[20px] font-semibold text-navy">
+          <User className="h-5 w-5 text-gold" />
           My profile
         </h1>
-        <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
+        <p className="text-sm mt-1 text-ink-muted">
           Your admin account details.
         </p>
       </div>
 
       <div
-        className="max-w-2xl rounded-2xl overflow-hidden"
-        style={{
-          background: "linear-gradient(180deg, rgba(22,35,58,0.96) 0%, rgba(16,29,48,0.96) 100%)",
-          border: "1px solid rgba(228,206,143,0.16)",
-          boxShadow: "0 16px 40px -16px rgba(0,0,0,0.4)",
-        }}
+        className="max-w-2xl rounded-2xl overflow-hidden bg-linear-to-b from-navy-raised/96 to-navy/96 border border-gold-light/16 shadow-panel"
       >
         {loading ? (
           <div className="py-16 flex items-center justify-center">
-            <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#5c6b81" }} />
+            <Loader2 className="h-5 w-5 animate-spin text-dusk" />
           </div>
         ) : !profile ? (
-          <div className="py-16 text-center text-sm" style={{ color: "#5c6b81" }}>
+          <div className="py-16 text-center text-sm text-dusk">
             Couldn't load profile.
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-4 px-6 py-6" style={{ borderBottom: "1px solid rgba(228,206,143,0.12)" }}>
+            <div className="flex items-center gap-4 px-6 py-6 border-b border-gold-light/12">
               <div
-                className="h-14 w-14 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{
-                  background: "linear-gradient(180deg, #E4CE8F 0%, #D2B876 100%)",
-                }}
+                className="h-14 w-14 rounded-full flex items-center justify-center shrink-0 bg-linear-to-b from-gold-light to-gold-muted"
               >
                 <span
-                  className="italic"
-                  style={{ fontFamily: "'Fraunces', serif", color: "#101d30", fontSize: 20, fontWeight: 600 }}
+                  className="italic font-display text-navy text-[20px] font-semibold"
                 >
                   {initials(profile.name)}
                 </span>
               </div>
               <div>
-                <p className="text-[17px] font-semibold" style={{ color: "#F3EEE3" }}>
+                <p className="text-[17px] font-semibold text-cream">
                   {profile.name}
                 </p>
                 <span
-                  className="inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium"
-                  style={{ background: "rgba(228,206,143,0.14)", color: "#E4CE8F" }}
+                  className="inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-gold-light/14 text-gold-light"
                 >
                   <Shield className="h-3 w-3" />
                   {profile.admin_role?.name || "N/A"}
@@ -117,16 +106,15 @@ export default function AdminProfile() {
             <div className="px-6 py-6 space-y-5">
               <div className="flex items-center gap-3">
                 <div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: "#0c1626", border: "1px solid rgba(228,206,143,0.12)" }}
+                  className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 bg-navy-inset border border-gold-light/12"
                 >
-                  <User className="h-4 w-4" style={{ color: "#93A1B5" }} />
+                  <User className="h-4 w-4 text-mist" />
                 </div>
                 <div>
-                  <p className="text-[11px] tracking-wider uppercase" style={{ color: "#5c6b81" }}>
+                  <p className="text-[11px] tracking-wider uppercase text-dusk">
                     Name
                   </p>
-                  <p className="text-sm mt-0.5" style={{ color: "#F3EEE3" }}>
+                  <p className="text-sm mt-0.5 text-cream">
                     {profile.name}
                   </p>
                 </div>
@@ -134,16 +122,15 @@ export default function AdminProfile() {
 
               <div className="flex items-center gap-3">
                 <div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: "#0c1626", border: "1px solid rgba(228,206,143,0.12)" }}
+                  className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 bg-navy-inset border border-gold-light/12"
                 >
-                  <Mail className="h-4 w-4" style={{ color: "#93A1B5" }} />
+                  <Mail className="h-4 w-4 text-mist" />
                 </div>
                 <div>
-                  <p className="text-[11px] tracking-wider uppercase" style={{ color: "#5c6b81" }}>
+                  <p className="text-[11px] tracking-wider uppercase text-dusk">
                     Email
                   </p>
-                  <p className="text-sm mt-0.5" style={{ color: "#F3EEE3" }}>
+                  <p className="text-sm mt-0.5 text-cream">
                     {profile.email}
                   </p>
                 </div>
@@ -151,16 +138,15 @@ export default function AdminProfile() {
 
               <div className="flex items-center gap-3">
                 <div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: "#0c1626", border: "1px solid rgba(228,206,143,0.12)" }}
+                  className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 bg-navy-inset border border-gold-light/12"
                 >
-                  <Shield className="h-4 w-4" style={{ color: "#93A1B5" }} />
+                  <Shield className="h-4 w-4 text-mist" />
                 </div>
                 <div>
-                  <p className="text-[11px] tracking-wider uppercase" style={{ color: "#5c6b81" }}>
+                  <p className="text-[11px] tracking-wider uppercase text-dusk">
                     Role
                   </p>
-                  <p className="text-sm mt-0.5" style={{ color: "#F3EEE3" }}>
+                  <p className="text-sm mt-0.5 text-cream">
                     {profile.admin_role?.name || "N/A"}
                   </p>
                 </div>

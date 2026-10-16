@@ -9,6 +9,7 @@ import {
   UpdateBlogCategoryAPI,
   DeleteBlogCategoryAPI,
 } from "@/services/Api/BlogCategoryApi";
+import { cn } from "@/lib/utils";
 
 interface BlogCategory {
   id: number;
@@ -16,12 +17,6 @@ interface BlogCategory {
   slug: string;
   is_active: boolean;
 }
-
-const inputStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e5eb",
-  color: "#101d30",
-};
 
 export default function BlogCategories() {
   const { toast } = useToast();
@@ -117,7 +112,7 @@ export default function BlogCategories() {
     }
   };
 
-  const handleDelete = async (id: number, name: string) => {
+  const handleDelete = async (id: number) => {
     try {
       setDeletingId(id);
       const res = await DeleteBlogCategoryAPI(id, token);
@@ -144,28 +139,26 @@ export default function BlogCategories() {
   return (
     <div className="w-full px-6 py-6 md:px-8 md:py-8">
       <div className="mb-5">
-        <h1 className="flex items-center gap-2 text-[20px] font-semibold" style={{ color: "#101d30" }}>
-          <Tag className="h-5 w-5" style={{ color: "#c9a227" }} />
+        <h1 className="flex items-center gap-2 text-[20px] font-semibold text-navy">
+          <Tag className="h-5 w-5 text-gold" />
           Blog Categories
         </h1>
-        <p className="text-sm mt-1" style={{ color: "#6b7688" }}>
+        <p className="text-sm mt-1 text-ink-muted">
           Organize blog posts into categories.
         </p>
       </div>
 
       <div
-        className="rounded-2xl overflow-hidden"
-        style={{ background: "#ffffff", border: "1px solid #e2e5eb", boxShadow: "0 1px 3px rgba(16,29,48,0.06)" }}
+        className="rounded-2xl overflow-hidden bg-white border border-line shadow-card"
       >
-        <div className="px-5 py-4 flex items-center gap-3 flex-wrap" style={{ borderBottom: "1px solid #edeff3" }}>
+        <div className="px-5 py-4 flex items-center gap-3 flex-wrap border-b border-line-soft">
           <div className="relative max-w-xs flex-1 min-w-[180px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#9aa3b2" }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint" />
             <Input
               placeholder="Search categories..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="h-9 rounded-lg pl-9 text-[13.5px]"
-              style={inputStyle}
             />
           </div>
 
@@ -176,13 +169,11 @@ export default function BlogCategories() {
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               className="h-9 rounded-lg text-[13.5px] flex-1"
-              style={inputStyle}
             />
             <button
               onClick={handleAdd}
               disabled={adding || !newName.trim()}
-              className="h-9 px-3 rounded-lg text-sm font-medium flex items-center gap-1.5 disabled:opacity-50 flex-shrink-0"
-              style={{ background: "#E4CE8F", color: "#101d30" }}
+              className="h-9 px-3 rounded-lg text-sm font-medium flex items-center gap-1.5 disabled:opacity-50 shrink-0 bg-gold-light text-navy"
             >
               {adding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
               Add
@@ -193,12 +184,11 @@ export default function BlogCategories() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ background: "#f8f9fb", borderBottom: "1px solid #edeff3" }}>
+              <tr className="bg-surface-muted border-b border-line-soft">
                 {["Name", "Slug", "Status", ""].map((h, i) => (
                   <th
                     key={i}
-                    className="text-left px-5 py-3 text-[10.5px] font-semibold uppercase tracking-wider"
-                    style={{ color: "#8993a6" }}
+                    className="text-left px-5 py-3 text-[10.5px] font-semibold uppercase tracking-wider text-ink-subtle"
                   >
                     {h}
                   </th>
@@ -209,19 +199,19 @@ export default function BlogCategories() {
               {loading ? (
                 <tr>
                   <td colSpan={4} className="px-5 py-14 text-center">
-                    <Loader2 className="h-5 w-5 animate-spin mx-auto" style={{ color: "#9aa3b2" }} />
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-ink-faint" />
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-14 text-center text-sm" style={{ color: "#9aa3b2" }}>
+                  <td colSpan={4} className="px-5 py-14 text-center text-sm text-ink-faint">
                     No categories found.
                   </td>
                 </tr>
               ) : (
-                filtered.map((cat, idx) => (
-                  <tr key={cat.id} style={{ background: idx % 2 === 1 ? "#fafbfc" : "#ffffff" }}>
-                    <td className="px-5 py-3 font-medium" style={{ color: "#101d30" }}>
+                filtered.map((cat) => (
+                  <tr key={cat.id} className="bg-white even:bg-surface-subtle">
+                    <td className="px-5 py-3 font-medium text-navy">
                       {editingId === cat.id ? (
                         <Input
                           value={editName}
@@ -229,23 +219,17 @@ export default function BlogCategories() {
                           onKeyDown={(e) => e.key === "Enter" && saveEdit(cat.id)}
                           autoFocus
                           className="h-8 rounded-lg text-[13.5px] max-w-[220px]"
-                          style={inputStyle}
                         />
                       ) : (
                         cat.name
                       )}
                     </td>
-                    <td className="px-5 py-3" style={{ color: "#6b7688" }}>
+                    <td className="px-5 py-3 text-ink-muted">
                       {cat.slug}
                     </td>
                     <td className="px-5 py-3">
                       <span
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium"
-                        style={
-                          cat.is_active
-                            ? { background: "#fbf3de", color: "#a3874f" }
-                            : { background: "#f1f2f5", color: "#8993a6" }
-                        }
+                        className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium", cat.is_active ? "bg-gold-soft text-gold-dark" : "bg-fill text-ink-subtle")}
                       >
                         {cat.is_active ? "Active" : "Inactive"}
                       </span>
@@ -257,15 +241,13 @@ export default function BlogCategories() {
                             <button
                               onClick={() => saveEdit(cat.id)}
                               disabled={saving}
-                              className="h-8 w-8 flex items-center justify-center rounded-lg"
-                              style={{ color: "#3f9d5c" }}
+                              className="h-8 w-8 flex items-center justify-center rounded-lg text-success"
                             >
                               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                             </button>
                             <button
                               onClick={cancelEdit}
-                              className="h-8 w-8 flex items-center justify-center rounded-lg"
-                              style={{ color: "#8993a6" }}
+                              className="h-8 w-8 flex items-center justify-center rounded-lg text-ink-subtle"
                             >
                               <X className="h-4 w-4" />
                             </button>
@@ -274,10 +256,7 @@ export default function BlogCategories() {
                           <>
                             <button
                               onClick={() => startEdit(cat)}
-                              className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors"
-                              style={{ color: "#8993a6" }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = "#f2f3f6")}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                              className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors text-ink-subtle hover:bg-fill"
                               title="Edit"
                             >
                               <Pencil className="h-4 w-4" />
@@ -285,10 +264,7 @@ export default function BlogCategories() {
                             <button
                               onClick={() => setDeleteTarget({ id: cat.id, name: cat.name })}
                               disabled={deletingId === cat.id}
-                              className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors disabled:opacity-50"
-                              style={{ color: "#c25b4a" }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = "#fbeceb")}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                              className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors disabled:opacity-50 text-danger hover:bg-danger-soft"
                               title="Delete"
                             >
                               {deletingId === cat.id ? (
@@ -312,42 +288,37 @@ export default function BlogCategories() {
       {/* Delete confirmation modal */}
       {deleteTarget && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          style={{ background: "rgba(16,29,48,0.45)" }}
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-navy/45"
           onClick={() => deletingId === null && setDeleteTarget(null)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl p-6"
-            style={{ background: "#ffffff", boxShadow: "0 24px 60px -16px rgba(16,29,48,0.35)" }}
+            className="w-full max-w-sm rounded-2xl p-6 bg-white shadow-modal"
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="h-10 w-10 rounded-full flex items-center justify-center mb-3"
-              style={{ background: "#fbeceb" }}
+              className="h-10 w-10 rounded-full flex items-center justify-center mb-3 bg-danger-soft"
             >
-              <AlertTriangle className="h-5 w-5" style={{ color: "#c25b4a" }} />
+              <AlertTriangle className="h-5 w-5 text-danger" />
             </div>
-            <h3 className="text-[16px] font-semibold" style={{ color: "#101d30" }}>
+            <h3 className="text-[16px] font-semibold text-navy">
               Delete category?
             </h3>
-            <p className="text-sm mt-1.5" style={{ color: "#6b7688" }}>
-              This will permanently remove <span style={{ color: "#101d30", fontWeight: 500 }}>"{deleteTarget.name}"</span>. This can't be undone.
+            <p className="text-sm mt-1.5 text-ink-muted">
+              This will permanently remove <span className="text-navy font-medium">"{deleteTarget.name}"</span>. This can't be undone.
             </p>
 
             <div className="flex items-center gap-2 mt-6">
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deletingId !== null}
-                className="flex-1 h-10 rounded-lg text-sm font-medium disabled:opacity-50"
-                style={{ background: "#f2f3f6", color: "#101d30" }}
+                className="flex-1 h-10 rounded-lg text-sm font-medium disabled:opacity-50 bg-fill text-navy"
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleDelete(deleteTarget.id, deleteTarget.name)}
+                onClick={() => handleDelete(deleteTarget.id)}
                 disabled={deletingId !== null}
-                className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-70"
-                style={{ background: "#c25b4a", color: "#ffffff" }}
+                className="flex-1 h-10 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-70 bg-danger text-white"
               >
                 {deletingId !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {deletingId !== null ? "Deleting..." : "Delete"}

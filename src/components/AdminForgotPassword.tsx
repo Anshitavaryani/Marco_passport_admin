@@ -15,12 +15,6 @@ const stepAnim = {
   transition: { duration: 0.35, ease: "easeOut" as const },
 };
 
-const inputStyle = {
-  background: "#0c1626",
-  border: "1px solid rgba(228,206,143,0.15)",
-  color: "#F3EEE3",
-};
-
 const stepCopy: Record<number, { eyebrow: string; heading: string; accent: string; sub: string }> = {
   1: { eyebrow: "Password Reset", heading: "Reset your", accent: "password", sub: "Enter your email and we'll send you a code." },
   2: { eyebrow: "Verify Identity", heading: "Check your", accent: "inbox", sub: "Enter the 6-digit code we just sent you." },
@@ -109,59 +103,47 @@ export default function AdminForgotPassword() {
 
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center relative overflow-hidden px-4"
-      style={{ background: "radial-gradient(ellipse 900px 600px at 80% -10%, #1c2e47 0%, #0e1a2b 55%, #0a1420 100%)" }}
+      className="min-h-screen w-full flex items-center justify-center relative overflow-hidden px-4 bg-auth-backdrop"
     >
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital@1&display=swap');`}</style>
 
       <svg className="absolute -bottom-24 -left-24 w-[600px] h-[600px] opacity-[0.08] pointer-events-none" viewBox="0 0 600 600" fill="none">
-        <circle cx="300" cy="300" r="299" stroke="#E4CE8F" strokeWidth="1" />
+        <circle className="stroke-gold-light" cx="300" cy="300" r="299" strokeWidth="1" />
       </svg>
       <svg className="absolute -top-40 -right-32 w-[500px] h-[500px] opacity-[0.06] pointer-events-none" viewBox="0 0 500 500" fill="none">
-        <circle cx="250" cy="250" r="249" stroke="#E4CE8F" strokeWidth="1" />
+        <circle className="stroke-gold-light" cx="250" cy="250" r="249" strokeWidth="1" />
       </svg>
 
       <div
-        className="relative z-10 w-full max-w-[420px] rounded-[28px] px-9 pt-10 pb-9"
-        style={{
-          background: "linear-gradient(180deg, rgba(22,35,58,0.9) 0%, rgba(16,29,48,0.9) 100%)",
-          border: "1px solid rgba(228,206,143,0.16)",
-          boxShadow: "0 30px 80px -20px rgba(0,0,0,0.65)",
-          backdropFilter: "blur(20px)",
-        }}
+        className="relative z-10 w-full max-w-[420px] rounded-[28px] px-9 pt-10 pb-9 bg-linear-to-b from-navy-raised/90 to-navy/90 border border-gold-light/16 shadow-auth backdrop-blur-[20px]"
       >
         <div className="flex flex-col items-center gap-4">
           <div
-            className="rounded-full p-3.5"
-            style={{
-              background: "linear-gradient(180deg, #FAF6EC 0%, #EFE4C8 100%)",
-              boxShadow: "0 10px 28px -10px rgba(0,0,0,0.55), 0 0 0 1px rgba(228,206,143,0.45)",
-            }}
+            className="rounded-full p-3.5 bg-linear-to-b from-parchment to-parchment-deep shadow-badge"
           >
             <img src={logoFull} alt="Marco Passport" className="h-14 w-14 object-contain" />
           </div>
           <svg width="120" height="14" viewBox="0 0 120 14" fill="none">
-            <path d="M2 8C20 -2 40 14 60 6C80 -2 100 14 118 6" stroke="#E4CE8F" strokeOpacity="0.5" strokeWidth="1.2" strokeLinecap="round" />
+            <path className="stroke-gold-light" d="M2 8C20 -2 40 14 60 6C80 -2 100 14 118 6" strokeOpacity="0.5" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
         </div>
 
         <div className="flex items-center gap-2 justify-center mt-6 mb-2">
-          <span className="h-px w-5" style={{ background: "#E4CE8F", opacity: 0.5 }} />
-          <span className="text-[10px] tracking-[0.25em] uppercase" style={{ color: "#C9A96A" }}>
+          <span className="h-px w-5 bg-gold-light opacity-50" />
+          <span className="text-[10px] tracking-[0.25em] uppercase text-gold-muted">
             {copy.eyebrow}
           </span>
-          <span className="h-px w-5" style={{ background: "#E4CE8F", opacity: 0.5 }} />
+          <span className="h-px w-5 bg-gold-light opacity-50" />
         </div>
 
         <AnimatePresence mode="wait">
           <motion.div key={`heading-${step}`} {...stepAnim}>
-            <h1 className="text-center text-[26px] leading-tight font-medium" style={{ color: "#F3EEE3" }}>
+            <h1 className="text-center text-[26px] leading-tight font-medium text-cream">
               {copy.heading}{" "}
-              <span className="italic" style={{ fontFamily: "'Fraunces', serif", color: "#E4CE8F" }}>
+              <span className="italic font-display text-gold-light">
                 {copy.accent}
               </span>
             </h1>
-            <p className="text-center text-sm mt-1.5 mb-8" style={{ color: "#8B96A8" }}>
+            <p className="text-center text-sm mt-1.5 mb-8 text-ink-subtle">
               {copy.sub}
             </p>
           </motion.div>
@@ -171,7 +153,7 @@ export default function AdminForgotPassword() {
           {step === 1 && (
             <motion.div key="step1" {...stepAnim} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[11px] tracking-wider uppercase" style={{ color: "#93A1B5" }}>
+                <label className="block text-[11px] leading-6 tracking-wider uppercase text-mist">
                   Email
                 </label>
                 <Input
@@ -179,16 +161,14 @@ export default function AdminForgotPassword() {
                   value={email}
                   type="email"
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 rounded-lg text-[15px]"
-                  style={inputStyle}
+                  className="h-11 rounded-lg text-[15px] bg-navy-inset border-gold-light/15 text-cream"
                 />
               </div>
 
               <button
                 disabled={loading}
                 onClick={handleSendOtp}
-                className="w-full h-11 rounded-lg font-semibold tracking-wide mt-2 flex items-center justify-center gap-1.5 group disabled:opacity-60"
-                style={{ background: "#E4CE8F", color: "#101d30" }}
+                className="w-full h-11 rounded-lg font-semibold tracking-wide mt-2 flex items-center justify-center gap-1.5 group disabled:opacity-60 bg-gold-light text-navy"
               >
                 {loading ? "Sending..." : (
                   <>
@@ -200,8 +180,7 @@ export default function AdminForgotPassword() {
 
               <a
                 href="/"
-                className="flex items-center justify-center gap-1.5 text-sm mt-1 hover:opacity-80 transition-opacity"
-                style={{ color: "#8B96A8" }}
+                className="flex items-center justify-center gap-1.5 text-sm mt-1 hover:opacity-80 transition-opacity text-ink-subtle"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Back to login
@@ -212,7 +191,7 @@ export default function AdminForgotPassword() {
           {step === 2 && (
             <motion.div key="step2" {...stepAnim} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[11px] tracking-wider uppercase" style={{ color: "#93A1B5" }}>
+                <label className="block text-[11px] leading-6 tracking-wider uppercase text-mist">
                   6-digit code
                 </label>
                 <Input
@@ -220,14 +199,13 @@ export default function AdminForgotPassword() {
                   value={otp}
                   maxLength={6}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  className="h-11 rounded-lg text-[18px] tracking-[0.4em] text-center"
-                  style={inputStyle}
+                  className="h-11 rounded-lg text-[18px] tracking-[0.4em] text-center bg-navy-inset border-gold-light/15 text-cream"
                 />
               </div>
 
-              <p className="text-xs text-right" style={{ color: "#5c6b81" }}>
+              <p className="text-xs text-right text-dusk">
                 Didn't get a code?{" "}
-                <button onClick={handleSendOtp} className="font-medium underline underline-offset-2" style={{ color: "#C9A96A" }}>
+                <button onClick={handleSendOtp} className="font-medium underline underline-offset-2 text-gold-muted">
                   Resend
                 </button>
               </p>
@@ -235,8 +213,7 @@ export default function AdminForgotPassword() {
               <button
                 disabled={loading}
                 onClick={handleVerifyOtp}
-                className="w-full h-11 rounded-lg font-semibold tracking-wide mt-2 flex items-center justify-center gap-1.5 group disabled:opacity-60"
-                style={{ background: "#E4CE8F", color: "#101d30" }}
+                className="w-full h-11 rounded-lg font-semibold tracking-wide mt-2 flex items-center justify-center gap-1.5 group disabled:opacity-60 bg-gold-light text-navy"
               >
                 {loading ? "Verifying..." : (
                   <>
@@ -251,7 +228,7 @@ export default function AdminForgotPassword() {
           {step === 3 && (
             <motion.div key="step3" {...stepAnim} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[11px] tracking-wider uppercase" style={{ color: "#93A1B5" }}>
+                <label className="block text-[11px] leading-6 tracking-wider uppercase text-mist">
                   New password
                 </label>
                 <div className="relative">
@@ -260,16 +237,12 @@ export default function AdminForgotPassword() {
                     placeholder="Enter new password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-11 rounded-lg pr-10 text-[15px]"
-                    style={inputStyle}
+                    className="h-11 rounded-lg pr-10 text-[15px] bg-navy-inset border-gold-light/15 text-cream"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPass(!showPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                    style={{ color: "#5c6b81" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#E4CE8F")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#5c6b81")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-dusk hover:text-gold-light"
                   >
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -277,7 +250,7 @@ export default function AdminForgotPassword() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] tracking-wider uppercase" style={{ color: "#93A1B5" }}>
+                <label className="block text-[11px] leading-6 tracking-wider uppercase text-mist">
                   Confirm password
                 </label>
                 <div className="relative">
@@ -286,16 +259,12 @@ export default function AdminForgotPassword() {
                     placeholder="Confirm new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="h-11 rounded-lg pr-10 text-[15px]"
-                    style={inputStyle}
+                    className="h-11 rounded-lg pr-10 text-[15px] bg-navy-inset border-gold-light/15 text-cream"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPass(!showConfirmPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                    style={{ color: "#5c6b81" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#E4CE8F")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#5c6b81")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-dusk hover:text-gold-light"
                   >
                     {showConfirmPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -305,8 +274,7 @@ export default function AdminForgotPassword() {
               <button
                 disabled={loading}
                 onClick={handleChangePassword}
-                className="w-full h-11 rounded-lg font-semibold tracking-wide mt-2 flex items-center justify-center gap-1.5 group disabled:opacity-60"
-                style={{ background: "#E4CE8F", color: "#101d30" }}
+                className="w-full h-11 rounded-lg font-semibold tracking-wide mt-2 flex items-center justify-center gap-1.5 group disabled:opacity-60 bg-gold-light text-navy"
               >
                 {loading ? "Updating..." : (
                   <>
@@ -319,7 +287,7 @@ export default function AdminForgotPassword() {
           )}
         </AnimatePresence>
 
-        <p className="text-center text-[10px] tracking-[0.2em] uppercase mt-8" style={{ color: "#3f4b60" }}>
+        <p className="text-center text-[10px] tracking-[0.2em] uppercase mt-8 text-dusk-deep">
           Marco Passport · Restricted Access
         </p>
       </div>

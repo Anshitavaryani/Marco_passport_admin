@@ -1,5 +1,5 @@
 /** @format */
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import {
   MapPin,
   Building2,
@@ -10,12 +10,6 @@ import {
 } from "lucide-react";
 import { useAdminProfile } from "@/hooks/use-admin-profile";
 import { canAccess } from "@/lib/adminRoles";
-
-const cardStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e5eb",
-  boxShadow: "0 1px 3px rgba(16,29,48,0.06)",
-};
 
 const quickLinks = [
   {
@@ -53,22 +47,21 @@ const Dashboard = () => {
 
   return (
     <div className="w-full px-6 py-6 md:px-8 md:py-8">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital@1&display=swap');`}</style>
 
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1.5">
-          <span className="h-px w-5" style={{ background: "#D2B876", opacity: 0.7 }} />
-          <span className="text-[10px] tracking-[0.25em] uppercase" style={{ color: "#a3874f" }}>
+          <span className="h-px w-5 bg-gold-muted opacity-70" />
+          <span className="text-[10px] tracking-[0.25em] uppercase text-gold-dark">
             Overview
           </span>
         </div>
-        <h1 className="text-[22px] font-semibold" style={{ color: "#101d30" }}>
+        <h1 className="text-[22px] font-semibold text-navy">
           Welcome{adminName ? `, ${adminName}` : " back"}
-          <span className="italic" style={{ fontFamily: "'Fraunces', serif", color: "#c9a227" }}>
+          <span className="italic font-display text-gold">
             .
           </span>
         </h1>
-        <p className="text-sm mt-1.5" style={{ color: "#6b7688" }}>
+        <p className="text-sm mt-1.5 text-ink-muted">
           Manage the places, businesses, and stories that make up the Marco Passport.
         </p>
       </div>
@@ -80,22 +73,20 @@ const Dashboard = () => {
           <button
             key={link.label}
             onClick={() => navigate(link.to)}
-            className="rounded-2xl p-5 text-left transition-transform hover:-translate-y-0.5"
-            style={cardStyle}
+            className="rounded-2xl p-5 text-left transition-transform hover:-translate-y-0.5 bg-white border border-line shadow-card"
           >
             <div className="flex items-start justify-between">
               <div
-                className="h-10 w-10 rounded-xl flex items-center justify-center"
-                style={{ background: "#fbf3de" }}
+                className="h-10 w-10 rounded-xl flex items-center justify-center bg-gold-soft"
               >
-                <link.icon className="h-[18px] w-[18px]" style={{ color: "#a3874f" }} />
+                <link.icon className="h-[18px] w-[18px] text-gold-dark" />
               </div>
-              <ArrowUpRight className="h-4 w-4" style={{ color: "#c2c7d1" }} />
+              <ArrowUpRight className="h-4 w-4 text-ink-ghost" />
             </div>
-            <p className="text-[15px] font-semibold mt-3" style={{ color: "#101d30" }}>
+            <p className="text-[15px] font-semibold mt-3 text-navy">
               {link.label}
             </p>
-            <p className="text-xs mt-0.5" style={{ color: "#9aa3b2" }}>
+            <p className="text-xs mt-0.5 text-ink-faint">
               {link.description}
             </p>
           </button>
@@ -105,19 +96,17 @@ const Dashboard = () => {
 
       {/* Insights placeholder */}
       <div
-        className="rounded-2xl p-12 flex flex-col items-center text-center gap-3"
-        style={cardStyle}
+        className="rounded-2xl p-12 flex flex-col items-center text-center gap-3 bg-white border border-line shadow-card"
       >
         <div
-          className="h-12 w-12 rounded-full flex items-center justify-center"
-          style={{ background: "#fbf3de", boxShadow: "0 0 0 1px #e4ce8f55" }}
+          className="h-12 w-12 rounded-full flex items-center justify-center bg-gold-soft ring-1 ring-gold-light/33"
         >
-          <Sparkles className="h-5 w-5" style={{ color: "#a3874f" }} />
+          <Sparkles className="h-5 w-5 text-gold-dark" />
         </div>
-        <h2 className="text-lg font-semibold" style={{ color: "#101d30" }}>
+        <h2 className="text-lg font-semibold text-navy">
           Insights are on the way
         </h2>
-        <p className="text-sm max-w-sm" style={{ color: "#6b7688" }}>
+        <p className="text-sm max-w-sm text-ink-muted">
           Charts and summaries for listings, top-rated places, and traffic across the Marco
           Passport will live here soon.
         </p>
